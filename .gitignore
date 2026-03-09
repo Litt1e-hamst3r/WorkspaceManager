@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+TestResults/
+logs/
+data/
+.dotnet/
+artifacts/
+*.log
+*.slnx
+*.user
+*.suo
+*.cache
