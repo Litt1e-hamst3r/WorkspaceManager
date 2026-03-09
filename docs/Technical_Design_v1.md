@@ -237,7 +237,9 @@ docs/
 
 职责：
 - 注册全局快捷键
+- 解析并规范化用户输入的快捷键字符串
 - 冲突检测
+- 更新失败时回滚到上一个可用快捷键
 - 分发热键命令
 
 ## 7. 数据存储设计
@@ -277,17 +279,23 @@ logs/
 ## 8.1 `AppSettings`
 - `LaunchAtStartup`
 - `StartMinimizedToTray`
+- `MinimizeToTrayOnMinimize`
+- `CloseToTrayOnClose`
 - `DefaultModeId`
 - `RememberLastMode`
 - `AutoOrganizeEnabled`
 - `DesktopToggleHotkey`
-- `OpenMainWindowHotkey`
+- `ShowMainWindowHotkey`
 - `LogLevel`
 
 ## 8.2 `HotkeyDefinition`
 - `Modifiers`
 - `Key`
 - `Enabled`
+
+当前 MVP 使用两组全局快捷键：
+- `DesktopToggleHotkey`：切换桌面图标显示/隐藏
+- `ShowMainWindowHotkey`：从托盘或隐藏任务栏状态下恢复主窗口
 
 ## 9. Windows 集成设计
 

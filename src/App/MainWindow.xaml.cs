@@ -14,7 +14,8 @@ public partial class MainWindow : System.Windows.Window
     private readonly TaskbarService _taskbarService;
     private readonly StartupRegistrationService _startupRegistrationService;
     private readonly MainWindowViewModel _viewModel;
-    private GlobalHotkeyService? _globalHotkeyService;
+    private GlobalHotkeyService? _desktopToggleHotkeyService;
+    private GlobalHotkeyService? _showMainWindowHotkeyService;
     private bool _allowClose;
 
     public MainWindow(
@@ -42,12 +43,17 @@ public partial class MainWindow : System.Windows.Window
         LoadLayoutsIntoView();
     }
 
-    public void AttachHotkeyService(GlobalHotkeyService hotkeyService)
+    public void AttachHotkeyServices(
+        GlobalHotkeyService desktopToggleHotkeyService,
+        GlobalHotkeyService showMainWindowHotkeyService)
     {
-        _globalHotkeyService = hotkeyService;
+        _desktopToggleHotkeyService = desktopToggleHotkeyService;
+        _showMainWindowHotkeyService = showMainWindowHotkeyService;
         SourceInitialized += OnSourceInitialized;
         Closed += OnClosed;
-        _viewModel.SetHotkey(hotkeyService.DisplayText);
+        _viewModel.SetDesktopToggleHotkeyInput(desktopToggleHotkeyService.DisplayText);
+        _viewModel.SetShowMainWindowHotkeyInput(showMainWindowHotkeyService.DisplayText);
+        _viewModel.SetHotkeys(desktopToggleHotkeyService.DisplayText, showMainWindowHotkeyService.DisplayText);
     }
 
     public void RefreshDesktopIconState()
@@ -113,9 +119,47 @@ public partial class MainWindow : System.Windows.Window
         }
     }
 
+    private async Task SetDesktopIconsVisibleAsync(bool visible)
+    {
+        try
+        {
+            await _desktopIconService.SetVisibleAsync(visible);
+            RefreshDesktopIconState();
+            _viewModel.SetStatus($"桌面图标已{(visible ? "显示" : "隐藏")}。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"{(visible ? "显示" : "隐藏")}桌面图标失败：{ex.Message}");
+        }
+    }
+
+    private async Task SetTaskbarVisibleAsync(bool visible)
+    {
+        try
+        {
+            await _taskbarService.SetVisibleAsync(visible);
+            RefreshTaskbarState();
+            _viewModel.SetStatus($"任务栏已{(visible ? "显示" : "隐藏")}。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"{(visible ? "显示" : "隐藏")}任务栏失败：{ex.Message}");
+        }
+    }
+
     private async void ToggleDesktopIcons_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         await ToggleDesktopIconsAsync();
+    }
+
+    private async void ShowDesktopIcons_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        await SetDesktopIconsVisibleAsync(true);
+    }
+
+    private async void HideDesktopIcons_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        await SetDesktopIconsVisibleAsync(false);
     }
 
     private void RefreshState_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -138,25 +182,73 @@ public partial class MainWindow : System.Windows.Window
         }
     }
 
-    private void ToggleHeaderDetails_Click(object sender, System.Windows.RoutedEventArgs e)
+    private async void ShowTaskbar_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        _viewModel.ToggleHeaderExpanded();
+        await SetTaskbarVisibleAsync(true);
+    }
+
+    private async void HideTaskbar_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        await SetTaskbarVisibleAsync(false);
     }
 
     private void SaveSettings_Click(object sender, System.Windows.RoutedEventArgs e)
     {
+        var previousDesktopToggleHotkey = _desktopToggleHotkeyService?.DisplayText ?? _appSettings.DesktopToggleHotkey;
+        var previousShowMainWindowHotkey = _showMainWindowHotkeyService?.DisplayText ?? _appSettings.ShowMainWindowHotkey;
+
         try
         {
+            var normalizedDesktopToggleHotkey = GlobalHotkeyService.Normalize(_viewModel.DesktopToggleHotkeyInput);
+            var normalizedShowMainWindowHotkey = GlobalHotkeyService.Normalize(_viewModel.ShowMainWindowHotkeyInput);
+
+            _desktopToggleHotkeyService?.UpdateHotkey(normalizedDesktopToggleHotkey);
+
+            try
+            {
+                _showMainWindowHotkeyService?.UpdateHotkey(normalizedShowMainWindowHotkey);
+            }
+            catch
+            {
+                if (_desktopToggleHotkeyService is not null
+                    && !string.Equals(previousDesktopToggleHotkey, normalizedDesktopToggleHotkey, StringComparison.Ordinal))
+                {
+                    _desktopToggleHotkeyService.UpdateHotkey(previousDesktopToggleHotkey);
+                }
+
+                throw;
+            }
+
             _appSettings.LaunchAtStartup = _viewModel.LaunchAtStartupEnabled;
             _appSettings.StartMinimizedToTray = _viewModel.StartMinimizedToTrayEnabled;
+            _appSettings.MinimizeToTrayOnMinimize = _viewModel.MinimizeToTrayOnMinimizeEnabled;
+            _appSettings.CloseToTrayOnClose = _viewModel.CloseToTrayOnCloseEnabled;
+            _appSettings.DesktopToggleHotkey = normalizedDesktopToggleHotkey;
+            _appSettings.ShowMainWindowHotkey = normalizedShowMainWindowHotkey;
 
             _startupRegistrationService.SetEnabled(_appSettings.LaunchAtStartup);
             _settingsStore.Save(_appSettings);
+            _viewModel.SetDesktopToggleHotkeyInput(normalizedDesktopToggleHotkey);
+            _viewModel.SetShowMainWindowHotkeyInput(normalizedShowMainWindowHotkey);
+            _viewModel.SetHotkeys(normalizedDesktopToggleHotkey, normalizedShowMainWindowHotkey);
 
             _viewModel.SetStatus("设置已保存。");
         }
         catch (Exception ex)
         {
+            if (_desktopToggleHotkeyService is not null)
+            {
+                _viewModel.SetDesktopToggleHotkeyInput(_desktopToggleHotkeyService.DisplayText);
+            }
+
+            if (_showMainWindowHotkeyService is not null)
+            {
+                _viewModel.SetShowMainWindowHotkeyInput(_showMainWindowHotkeyService.DisplayText);
+            }
+
+            _viewModel.SetHotkeys(
+                _desktopToggleHotkeyService?.DisplayText ?? previousDesktopToggleHotkey,
+                _showMainWindowHotkeyService?.DisplayText ?? previousShowMainWindowHotkey);
             _viewModel.SetStatus($"保存设置失败：{ex.Message}");
         }
     }
@@ -168,8 +260,55 @@ public partial class MainWindow : System.Windows.Window
 
         _appSettings.LaunchAtStartup = latest.LaunchAtStartup;
         _appSettings.StartMinimizedToTray = latest.StartMinimizedToTray;
+        _appSettings.MinimizeToTrayOnMinimize = latest.MinimizeToTrayOnMinimize;
+        _appSettings.CloseToTrayOnClose = latest.CloseToTrayOnClose;
+        _appSettings.DesktopToggleHotkey = string.IsNullOrWhiteSpace(latest.DesktopToggleHotkey)
+            ? AppSettings.DefaultDesktopToggleHotkey
+            : latest.DesktopToggleHotkey;
+        _appSettings.ShowMainWindowHotkey = string.IsNullOrWhiteSpace(latest.ShowMainWindowHotkey)
+            ? AppSettings.DefaultShowMainWindowHotkey
+            : latest.ShowMainWindowHotkey;
+
+        if (_desktopToggleHotkeyService is not null)
+        {
+            try
+            {
+                _desktopToggleHotkeyService.UpdateHotkey(_appSettings.DesktopToggleHotkey);
+                _appSettings.DesktopToggleHotkey = _desktopToggleHotkeyService.DisplayText;
+            }
+            catch (Exception ex)
+            {
+                _appSettings.DesktopToggleHotkey = _desktopToggleHotkeyService.DisplayText;
+                LoadSettingsIntoView();
+                _viewModel.SetHotkeys(
+                    _desktopToggleHotkeyService.DisplayText,
+                    _showMainWindowHotkeyService?.DisplayText ?? _appSettings.ShowMainWindowHotkey);
+                _viewModel.SetStatus($"重新加载设置时快捷键未更新：{ex.Message}");
+                return;
+            }
+        }
+
+        if (_showMainWindowHotkeyService is not null)
+        {
+            try
+            {
+                _showMainWindowHotkeyService.UpdateHotkey(_appSettings.ShowMainWindowHotkey);
+                _appSettings.ShowMainWindowHotkey = _showMainWindowHotkeyService.DisplayText;
+            }
+            catch (Exception ex)
+            {
+                _appSettings.ShowMainWindowHotkey = _showMainWindowHotkeyService.DisplayText;
+                LoadSettingsIntoView();
+                _viewModel.SetHotkeys(
+                    _desktopToggleHotkeyService?.DisplayText ?? _appSettings.DesktopToggleHotkey,
+                    _showMainWindowHotkeyService.DisplayText);
+                _viewModel.SetStatus($"重新加载设置时快捷键未更新：{ex.Message}");
+                return;
+            }
+        }
 
         LoadSettingsIntoView();
+        _viewModel.SetHotkeys(_appSettings.DesktopToggleHotkey, _appSettings.ShowMainWindowHotkey);
         _viewModel.SetStatus("设置已重新加载。");
     }
 
@@ -257,15 +396,17 @@ public partial class MainWindow : System.Windows.Window
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
-        if (_globalHotkeyService is null)
+        if (_desktopToggleHotkeyService is null || _showMainWindowHotkeyService is null)
         {
             return;
         }
 
         try
         {
-            _globalHotkeyService.Register(this);
-            _globalHotkeyService.HotkeyPressed += OnHotkeyPressed;
+            _desktopToggleHotkeyService.Register(this);
+            _desktopToggleHotkeyService.HotkeyPressed += OnDesktopToggleHotkeyPressed;
+            _showMainWindowHotkeyService.Register(this);
+            _showMainWindowHotkeyService.HotkeyPressed += OnShowMainWindowHotkeyPressed;
             _viewModel.SetStatus("托盘、全局快捷键和布局功能已可用。");
         }
         catch (Exception ex)
@@ -276,22 +417,30 @@ public partial class MainWindow : System.Windows.Window
 
     private void OnClosed(object? sender, EventArgs e)
     {
-        if (_globalHotkeyService is null)
+        if (_desktopToggleHotkeyService is not null)
         {
-            return;
+            _desktopToggleHotkeyService.HotkeyPressed -= OnDesktopToggleHotkeyPressed;
         }
 
-        _globalHotkeyService.HotkeyPressed -= OnHotkeyPressed;
+        if (_showMainWindowHotkeyService is not null)
+        {
+            _showMainWindowHotkeyService.HotkeyPressed -= OnShowMainWindowHotkeyPressed;
+        }
     }
 
-    private async void OnHotkeyPressed(object? sender, EventArgs e)
+    private async void OnDesktopToggleHotkeyPressed(object? sender, EventArgs e)
     {
         await Dispatcher.InvokeAsync(ToggleDesktopIconsAsync);
     }
 
+    private async void OnShowMainWindowHotkeyPressed(object? sender, EventArgs e)
+    {
+        await Dispatcher.InvokeAsync(ShowFromTray);
+    }
+
     private void OnStateChanged(object? sender, EventArgs e)
     {
-        if (WindowState != System.Windows.WindowState.Minimized)
+        if (WindowState != System.Windows.WindowState.Minimized || !_appSettings.MinimizeToTrayOnMinimize)
         {
             return;
         }
@@ -306,6 +455,12 @@ public partial class MainWindow : System.Windows.Window
             return;
         }
 
+        if (!_appSettings.CloseToTrayOnClose)
+        {
+            _allowClose = true;
+            return;
+        }
+
         e.Cancel = true;
         HideToTray("窗口已关闭到托盘，应用仍在后台运行。");
     }
@@ -314,6 +469,14 @@ public partial class MainWindow : System.Windows.Window
     {
         _viewModel.SetLaunchAtStartup(_appSettings.LaunchAtStartup);
         _viewModel.SetStartMinimizedToTray(_appSettings.StartMinimizedToTray);
+        _viewModel.SetMinimizeToTrayOnMinimize(_appSettings.MinimizeToTrayOnMinimize);
+        _viewModel.SetCloseToTrayOnClose(_appSettings.CloseToTrayOnClose);
+        _viewModel.SetDesktopToggleHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.DesktopToggleHotkey)
+            ? AppSettings.DefaultDesktopToggleHotkey
+            : _appSettings.DesktopToggleHotkey);
+        _viewModel.SetShowMainWindowHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.ShowMainWindowHotkey)
+            ? AppSettings.DefaultShowMainWindowHotkey
+            : _appSettings.ShowMainWindowHotkey);
     }
 
     private void LoadLayoutsIntoView()

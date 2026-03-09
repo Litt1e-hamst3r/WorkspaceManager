@@ -14,112 +14,58 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Style="{StaticResource CardBorderStyle}" Padding="20">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding AppName}"
+                       FontSize="26"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
 
-                    <StackPanel>
-                        <Border Width="84"
-                                Height="28"
-                                Background="{StaticResource AccentSoftBrush}"
-                                CornerRadius="14"
-                                HorizontalAlignment="Left">
-                            <TextBlock Text="DESKTOP"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       FontWeight="Bold"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" />
-                        </Border>
+            <Border Grid.Column="1"
+                    Margin="16,0,0,0"
+                    Padding="12,8"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    VerticalAlignment="Center">
+                <TextBlock Text="{Binding DesktopIconStateText}"
+                           Foreground="{StaticResource StrongTextBrush}"
+                           FontWeight="SemiBold" />
+            </Border>
 
-                        <TextBlock Margin="0,12,0,0"
-                                   Text="{Binding AppName}"
-                                   FontSize="28"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Margin="0,6,0,0"
-                                   Text="桌面图标、布局快照和启动设置的集中入口。"
-                                   Foreground="{StaticResource MutedTextBrush}" />
-                    </StackPanel>
+            <Border Grid.Column="2"
+                    Margin="12,0,0,0"
+                    Padding="12,8"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    VerticalAlignment="Center">
+                <TextBlock Text="{Binding TaskbarStateText}"
+                           Foreground="{StaticResource StrongTextBrush}"
+                           FontWeight="SemiBold" />
+            </Border>
 
-                    <Border Grid.Column="1"
-                            Margin="18,0,12,0"
-                            Padding="12,8"
-                            Background="{StaticResource SurfaceAltBrush}"
-                            BorderBrush="{StaticResource CardBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            VerticalAlignment="Top">
-                        <TextBlock Text="{Binding DesktopIconStateText}"
-                                   Foreground="{StaticResource StrongTextBrush}"
-                                   FontWeight="SemiBold" />
-                    </Border>
-
-                    <Button Grid.Column="2"
-                            Width="96"
-                            Height="36"
-                            Content="{Binding HeaderToggleText}"
-                            Click="ToggleHeaderDetails_Click"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            VerticalAlignment="Top" />
-                </Grid>
-
-                <Grid Grid.Row="1"
-                      Margin="0,18,0,0"
-                      Visibility="{Binding HeaderDetailsVisibility}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel>
-                        <TextBlock Text="把常用操作、布局快照和启动设置放到一个干净的桌面管理入口。"
-                                   FontSize="14"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   TextWrapping="Wrap" />
-                        <TextBlock Margin="0,12,0,0"
-                                   Text="需要更多空间时，可以直接收起这块介绍区。"
-                                   Foreground="{StaticResource MutedTextBrush}" />
-                    </StackPanel>
-
-                    <Border Grid.Column="1"
-                            MinWidth="260"
-                            Margin="24,0,0,0"
-                            Padding="18"
-                            Background="#0F172A"
-                            CornerRadius="18">
-                        <StackPanel>
-                            <TextBlock Text="当前状态"
-                                       Foreground="#94A3B8"
-                                       FontSize="12"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Margin="0,10,0,0"
-                                       Text="{Binding DesktopIconStateText}"
-                                       Foreground="White"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="{Binding TaskbarStateText}"
-                                       Foreground="#CBD5E1"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Margin="0,10,0,0"
-                                       Text="{Binding HotkeyText}"
-                                       Foreground="#CBD5E1" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Grid>
-        </Border>
+            <Border Grid.Column="3"
+                    Margin="12,0,0,0"
+                    Padding="12,8"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    VerticalAlignment="Center">
+                <TextBlock Text="{Binding HotkeyText}"
+                           Foreground="{StaticResource MutedTextBrush}"
+                           FontWeight="SemiBold" />
+            </Border>
+        </Grid>
 
         <TabControl Grid.Row="1" Margin="0,20,0,0">
             <TabItem Header="概览">
@@ -130,51 +76,9 @@
                     <Grid Margin="4,18,4,12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0">
-                            <StackPanel>
-                                <TextBlock Text="图标状态" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBlock Margin="0,12,0,0" Text="{Binding DesktopIconStateText}" FontSize="20" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,10,0,0" Text="实时读取桌面图标显隐状态。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Margin="10,0">
-                            <StackPanel>
-                                <TextBlock Text="快速触发" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBlock Margin="0,12,0,0" Text="{Binding HotkeyText}" FontSize="20" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,10,0,0" Text="支持托盘、按钮和全局快捷键三种入口。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Margin="10,0,0,0">
-                            <StackPanel>
-                                <TextBlock Text="后台运行" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBlock Margin="0,12,0,0" Text="托盘常驻" FontSize="20" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,10,0,0" Text="最小化和关闭都会隐藏到托盘，不会中断工作流。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="3" Style="{StaticResource CardBorderStyle}" Margin="10,0,0,0">
-                            <StackPanel>
-                                <TextBlock Text="任务栏状态" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBlock Margin="0,12,0,0" Text="{Binding TaskbarStateText}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                <TextBlock Margin="0,10,0,0" Text="支持快速隐藏或恢复 Windows 任务栏。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <Grid Grid.Row="1" Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="3*" />
                             <ColumnDefinition Width="2*" />
@@ -182,55 +86,194 @@
 
                         <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
                             <StackPanel>
-                                <TextBlock Text="快捷操作" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,8,0,0" Text="常用动作集中在这里，方便你快速试功能。" Foreground="{StaticResource MutedTextBrush}" />
+                                <Border Style="{StaticResource PillBorderStyle}"
+                                        Background="{StaticResource AccentSoftBrush}"
+                                        BorderBrush="{StaticResource AccentSoftBrush}"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="工作区状态"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                                <TextBlock Margin="0,16,0,0"
+                                           Text="当前桌面控制入口"
+                                           FontSize="24"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="图标、任务栏、托盘与快捷键都集中在这里，日常切换会更直接。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
 
-                                <WrapPanel Margin="0,18,0,0">
-                                    <Button Width="160" Height="42" Content="切换桌面图标" Click="ToggleDesktopIcons_Click" />
-                                    <Button Width="140"
+                                <Grid Margin="0,20,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock Text="桌面图标"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                        <Border Margin="0,10,0,0"
+                                                Style="{StaticResource SegmentGroupBorderStyle}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0"
+                                                        Content="显示"
+                                                        Click="ShowDesktopIcons_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentButtonBaseStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDesktopIconsVisible}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <Button Grid.Column="1"
+                                                        Content="隐藏"
+                                                        Click="HideDesktopIcons_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentButtonBaseStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDesktopIconsVisible}" Value="False">
+                                                                    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="任务栏"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                        <Border Margin="0,10,0,0"
+                                                Style="{StaticResource SegmentGroupBorderStyle}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0"
+                                                        Content="显示"
+                                                        Click="ShowTaskbar_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentButtonBaseStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTaskbarVisible}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <Button Grid.Column="1"
+                                                        Content="隐藏"
+                                                        Click="HideTaskbar_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentButtonBaseStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsTaskbarVisible}" Value="False">
+                                                                    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="2"
+                                            Width="120"
                                             Height="42"
-                                            Margin="12,0,0,0"
-                                            Content="切换任务栏"
-                                            Click="ToggleTaskbar_Click"
-                                            Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Width="120"
-                                            Height="42"
-                                            Margin="12,0,0,0"
+                                            Margin="12,23,0,0"
                                             Content="刷新状态"
                                             Click="RefreshState_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                </WrapPanel>
+                                </Grid>
 
                                 <Border Margin="0,22,0,0"
                                         Padding="16"
                                         Background="{StaticResource SurfaceAltBrush}"
                                         CornerRadius="14">
-                                    <StackPanel>
-                                        <TextBlock Text="提示" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,8,0,0"
-                                                   Text="你现在可以从托盘或主窗口切换桌面图标与任务栏显示状态。"
-                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="桌面图标" FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Text="{Binding DesktopIconStateText}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                                            <TextBlock Text="任务栏" FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Text="{Binding TaskbarStateText}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
                             </StackPanel>
                         </Border>
 
-                        <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="运行方式" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,8,0,0" Text="当前版本已支持这些行为：" Foreground="{StaticResource MutedTextBrush}" />
+                        <Grid Grid.Column="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                                <StackPanel Margin="0,18,0,0">
-                                    <TextBlock Text="• 最小化自动进入托盘" Margin="0,0,0,10" />
-                                    <TextBlock Text="• 关闭窗口不退出程序" Margin="0,0,0,10" />
-                                    <TextBlock Text="• 双击托盘图标恢复窗口" Margin="0,0,0,10" />
-                                    <TextBlock Text="• 任务栏可单独隐藏或恢复" Margin="0,0,0,10" />
-                                    <TextBlock Text="• 开机自启与启动最小化可配置" />
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="当前状态" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,12,0,0"
+                                               Text="{Binding HotkeyText}"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Margin="0,10,0,0"
+                                               Text="双击托盘图标可恢复窗口，快捷键可快速切换桌面图标。"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               TextWrapping="Wrap" />
                                 </StackPanel>
-                            </StackPanel>
-                        </Border>
+                            </Border>
+
+                            <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="运行方式" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,14,0,0" Text="• 最小化自动进入托盘" />
+                                    <TextBlock Margin="0,8,0,0" Text="• 关闭窗口不退出程序" />
+                                    <TextBlock Margin="0,8,0,0" Text="• 任务栏可单独隐藏或恢复" />
+                                    <TextBlock Margin="0,8,0,0" Text="• 支持开机自启与启动最小化" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                     </Grid>
+
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -503,22 +546,50 @@
                                       Content="启动时最小化到托盘"
                                       IsChecked="{Binding StartMinimizedToTrayEnabled}" />
                             <TextBlock Margin="24,6,0,0" Text="启动后不弹出主窗口，直接在托盘后台运行。" Foreground="{StaticResource MutedTextBrush}" />
+
+                            <CheckBox Margin="0,18,0,0"
+                                      Content="最小化时隐藏到托盘"
+                                      IsChecked="{Binding MinimizeToTrayOnMinimizeEnabled}" />
+                            <TextBlock Margin="24,6,0,0" Text="点击最小化后不保留任务栏窗口，直接进入托盘。" Foreground="{StaticResource MutedTextBrush}" />
+
+                            <CheckBox Margin="0,18,0,0"
+                                      Content="关闭窗口时隐藏到托盘"
+                                      IsChecked="{Binding CloseToTrayOnCloseEnabled}" />
+                            <TextBlock Margin="24,6,0,0" Text="点击右上角关闭按钮时不退出程序，而是隐藏到托盘。" Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>
                     </Border>
 
                     <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="保存设置" FontSize="18" FontWeight="SemiBold" />
+                            <TextBlock Text="快捷键与保存" FontSize="18" FontWeight="SemiBold" />
                             <TextBlock Margin="0,8,0,0" Text="修改会保存到本机，并在下次启动时继续生效。" Foreground="{StaticResource MutedTextBrush}" />
+
+                            <TextBlock Margin="0,18,0,0" Text="桌面图标切换快捷键" FontWeight="SemiBold" />
+                            <TextBox Margin="0,8,0,0"
+                                     Height="40"
+                                     Text="{Binding DesktopToggleHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="支持 Ctrl、Alt、Shift、Win 组合，例如 Ctrl+Shift+D、Alt+F2。"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       TextWrapping="Wrap" />
+
+                            <TextBlock Margin="0,18,0,0" Text="显示主窗口快捷键" FontWeight="SemiBold" />
+                            <TextBox Margin="0,8,0,0"
+                                     Height="40"
+                                     Text="{Binding ShowMainWindowHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="当任务栏被隐藏或窗口已缩到托盘时，可用这个快捷键直接拉回主窗口。"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       TextWrapping="Wrap" />
 
                             <Border Margin="0,18,0,0"
                                     Padding="16"
                                     Background="{StaticResource SurfaceAltBrush}"
                                     CornerRadius="14">
                                 <StackPanel>
-                                    <TextBlock Text="当前推荐" FontWeight="SemiBold" />
+                                    <TextBlock Text="输入规则" FontWeight="SemiBold" />
                                     <TextBlock Margin="0,8,0,0"
-                                               Text="如果你把它当桌面常驻工具，建议同时开启“开机自启”和“启动时最小化到托盘”。"
+                                               Text="两个快捷键都必须包含至少一个修饰键和一个主按键。保存时会自动规范成标准格式。"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                TextWrapping="Wrap" />
                                 </StackPanel>

@@ -7,7 +7,8 @@ public partial class App : System.Windows.Application
     private DesktopLayoutPreviewService? _desktopLayoutPreviewService;
     private AppSettings? _settings;
     private AppSettingsStore? _settingsStore;
-    private GlobalHotkeyService? _globalHotkeyService;
+    private GlobalHotkeyService? _desktopToggleHotkeyService;
+    private GlobalHotkeyService? _showMainWindowHotkeyService;
     private StartupRegistrationService? _startupRegistrationService;
     private TaskbarService? _taskbarService;
     private TrayIconHost? _trayIconHost;
@@ -26,6 +27,17 @@ public partial class App : System.Windows.Application
         _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService);
         _settings = _settingsStore.Load();
         _settings.LaunchAtStartup = _startupRegistrationService.IsEnabled();
+        try
+        {
+            _settings.DesktopToggleHotkey = GlobalHotkeyService.Normalize(_settings.DesktopToggleHotkey);
+            _settings.ShowMainWindowHotkey = GlobalHotkeyService.Normalize(_settings.ShowMainWindowHotkey);
+        }
+        catch
+        {
+            _settings.DesktopToggleHotkey = AppSettings.DefaultDesktopToggleHotkey;
+            _settings.ShowMainWindowHotkey = AppSettings.DefaultShowMainWindowHotkey;
+            _settingsStore.Save(_settings);
+        }
 
         var mainWindow = new MainWindow(
             DesktopIconService,
@@ -36,8 +48,9 @@ public partial class App : System.Windows.Application
             _startupRegistrationService);
         MainWindow = mainWindow;
 
-        _globalHotkeyService = new GlobalHotkeyService();
-        mainWindow.AttachHotkeyService(_globalHotkeyService);
+        _desktopToggleHotkeyService = new GlobalHotkeyService(_settings.DesktopToggleHotkey);
+        _showMainWindowHotkeyService = new GlobalHotkeyService(_settings.ShowMainWindowHotkey);
+        mainWindow.AttachHotkeyServices(_desktopToggleHotkeyService, _showMainWindowHotkeyService);
 
         _trayIconHost = new TrayIconHost(mainWindow, DesktopIconService, _taskbarService);
         _trayIconHost.Initialize();
@@ -56,7 +69,8 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(System.Windows.ExitEventArgs e)
     {
-        _globalHotkeyService?.Dispose();
+        _desktopToggleHotkeyService?.Dispose();
+        _showMainWindowHotkeyService?.Dispose();
         _trayIconHost?.Dispose();
         base.OnExit(e);
     }
