@@ -1,11 +1,14 @@
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
 namespace WorkspaceManager.App.ViewModels;
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
+    private string _layoutNameInput = string.Empty;
     private bool _launchAtStartupEnabled;
+    private LayoutSummaryViewModel? _selectedLayout;
     private bool _startMinimizedToTrayEnabled;
     private string _statusMessage = "桌面图标、托盘和快捷键原型已可用。";
     private string _desktopIconStateText = "桌面图标状态：未读取";
@@ -43,6 +46,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public string LayoutNameInput
+    {
+        get => _layoutNameInput;
+        set
+        {
+            if (_layoutNameInput == value)
+            {
+                return;
+            }
+
+            _layoutNameInput = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool LaunchAtStartupEnabled
     {
         get => _launchAtStartupEnabled;
@@ -69,6 +87,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _startMinimizedToTrayEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ObservableCollection<LayoutSummaryViewModel> SavedLayouts { get; } = [];
+
+    public LayoutSummaryViewModel? SelectedLayout
+    {
+        get => _selectedLayout;
+        set
+        {
+            if (_selectedLayout == value)
+            {
+                return;
+            }
+
+            _selectedLayout = value;
             OnPropertyChanged();
         }
     }
@@ -114,6 +149,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void SetStartMinimizedToTray(bool enabled)
     {
         StartMinimizedToTrayEnabled = enabled;
+    }
+
+    public void SetLayoutNameInput(string value)
+    {
+        LayoutNameInput = value;
+    }
+
+    public void SetLayouts(IEnumerable<LayoutSummaryViewModel> layouts)
+    {
+        SavedLayouts.Clear();
+        foreach (var layout in layouts)
+        {
+            SavedLayouts.Add(layout);
+        }
+
+        SelectedLayout = SavedLayouts.FirstOrDefault();
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
