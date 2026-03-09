@@ -4,6 +4,7 @@ public sealed class AppSettings
 {
     public const string DefaultDesktopToggleHotkey = "Ctrl+Shift+D";
     public const string DefaultShowMainWindowHotkey = "Ctrl+Alt+W";
+    public const string DefaultModeIdValue = "default";
 
     public bool LaunchAtStartup { get; set; }
 
@@ -16,4 +17,6 @@ public sealed class AppSettings
     public string DesktopToggleHotkey { get; set; } = DefaultDesktopToggleHotkey;
 
     public string ShowMainWindowHotkey { get; set; } = DefaultShowMainWindowHotkey;
+
+    public string DefaultModeId { get; set; } = DefaultModeIdValue;
 }

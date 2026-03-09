@@ -91,6 +91,7 @@ docs/
 - `Name`
 - `Description`
 - `DesktopIconsVisible`
+- `TaskbarVisible`
 - `LayoutId`
 - `EnableAutoOrganize`
 - `EnabledRuleIds`
@@ -185,13 +186,20 @@ docs/
 职责：
 - 加载模式配置
 - 切换模式
+- 恢复模式绑定的布局快照
+- 创建并持久化自定义模式
 - 执行模式附带动作
 - 恢复退出前状态
 
 接口建议：
 - `Task<IReadOnlyList<DesktopMode>> GetModesAsync()`
 - `Task SwitchAsync(string modeId)`
+- `DesktopMode CreateCustomMode(...)`
+- `DesktopMode UpdateCustomMode(...)`
+- `void DeleteCustomMode(string modeId)`
 - `Task RevertLastAsync()`
+
+当前 MVP 中，自定义模式通过独立模式编辑弹窗维护，主界面只保留紧凑入口与操作按钮。
 
 ## 6.5 `RuleEngineService`
 
@@ -267,7 +275,7 @@ logs/
 
 ### 7.2 文件职责
 - `appsettings.json`：基础设置、自启动、托盘、默认模式、快捷键
-- `modes.json`：模式定义
+- `modes.json`：预设模式定义、布局绑定、图标/任务栏显隐配置
 - `rules.json`：整理规则定义
 - `layouts/*.json`：布局快照
 - `layout-previews/*.png`：布局保存时生成的桌面缩略图

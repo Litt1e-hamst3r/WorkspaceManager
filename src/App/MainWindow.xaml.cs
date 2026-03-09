@@ -9,6 +9,7 @@ public partial class MainWindow : System.Windows.Window
 {
     private readonly AppSettings _appSettings;
     private readonly DesktopLayoutService _desktopLayoutService;
+    private readonly ModeService _modeService;
     private readonly AppSettingsStore _settingsStore;
     private readonly DesktopIconService _desktopIconService;
     private readonly TaskbarService _taskbarService;
@@ -16,12 +17,14 @@ public partial class MainWindow : System.Windows.Window
     private readonly MainWindowViewModel _viewModel;
     private GlobalHotkeyService? _desktopToggleHotkeyService;
     private GlobalHotkeyService? _showMainWindowHotkeyService;
+    private string? _currentModeId;
     private bool _allowClose;
 
     public MainWindow(
         DesktopIconService desktopIconService,
         TaskbarService taskbarService,
         DesktopLayoutService desktopLayoutService,
+        ModeService modeService,
         AppSettings appSettings,
         AppSettingsStore settingsStore,
         StartupRegistrationService startupRegistrationService)
@@ -29,6 +32,7 @@ public partial class MainWindow : System.Windows.Window
         InitializeComponent();
         _appSettings = appSettings;
         _desktopLayoutService = desktopLayoutService;
+        _modeService = modeService;
         _settingsStore = settingsStore;
         _desktopIconService = desktopIconService;
         _taskbarService = taskbarService;
@@ -41,6 +45,7 @@ public partial class MainWindow : System.Windows.Window
 
         LoadSettingsIntoView();
         LoadLayoutsIntoView();
+        LoadModesIntoView();
     }
 
     public void AttachHotkeyServices(
@@ -104,6 +109,25 @@ public partial class MainWindow : System.Windows.Window
     {
         _allowClose = true;
         Close();
+    }
+
+    public void ApplyConfiguredDefaultMode()
+    {
+        if (string.IsNullOrWhiteSpace(_appSettings.DefaultModeId))
+        {
+            return;
+        }
+
+        try
+        {
+            ApplyModeAsync(_appSettings.DefaultModeId, "已应用默认模式“{0}”。")
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"应用默认模式失败：{ex.Message}");
+        }
     }
 
     private async Task ToggleDesktopIconsAsync()
@@ -230,12 +254,17 @@ public partial class MainWindow : System.Windows.Window
             _appSettings.CloseToTrayOnClose = _viewModel.CloseToTrayOnCloseEnabled;
             _appSettings.DesktopToggleHotkey = normalizedDesktopToggleHotkey;
             _appSettings.ShowMainWindowHotkey = normalizedShowMainWindowHotkey;
+            _appSettings.DefaultModeId = string.IsNullOrWhiteSpace(_viewModel.DefaultModeId)
+                ? AppSettings.DefaultModeIdValue
+                : _viewModel.DefaultModeId;
 
             _startupRegistrationService.SetEnabled(_appSettings.LaunchAtStartup);
             _settingsStore.Save(_appSettings);
             _viewModel.SetDesktopToggleHotkeyInput(normalizedDesktopToggleHotkey);
             _viewModel.SetShowMainWindowHotkeyInput(normalizedShowMainWindowHotkey);
             _viewModel.SetHotkeys(normalizedDesktopToggleHotkey, normalizedShowMainWindowHotkey);
+            _viewModel.SetDefaultModeName(FindModeName(_appSettings.DefaultModeId));
+            LoadModesIntoView();
 
             _viewModel.SetStatus("设置已保存。");
         }
@@ -255,6 +284,157 @@ public partial class MainWindow : System.Windows.Window
                 _desktopToggleHotkeyService?.DisplayText ?? previousDesktopToggleHotkey,
                 _showMainWindowHotkeyService?.DisplayText ?? previousShowMainWindowHotkey);
             _viewModel.SetStatus($"保存设置失败：{ex.Message}");
+        }
+    }
+
+    private async void ApplyMode_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedMode is null)
+        {
+            _viewModel.SetStatus("请先选择一个模式。");
+            return;
+        }
+
+        await ApplyModeAsync(_viewModel.SelectedMode.Id, "已切换到模式“{0}”。");
+    }
+
+    private void SetDefaultMode_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedMode is null)
+        {
+            _viewModel.SetStatus("请先选择一个模式。");
+            return;
+        }
+
+        _appSettings.DefaultModeId = _viewModel.SelectedMode.Id;
+        _settingsStore.Save(_appSettings);
+        _viewModel.SetDefaultModeId(_appSettings.DefaultModeId);
+        _viewModel.SetDefaultModeName(_viewModel.SelectedMode.Name);
+        LoadModesIntoView();
+        _viewModel.SetStatus($"已将“{_viewModel.SelectedMode.Name}”设为默认模式。");
+    }
+
+    private void SaveModeLayoutBinding_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedMode is null)
+        {
+            _viewModel.SetStatus("请先选择一个模式。");
+            return;
+        }
+
+        try
+        {
+            var layoutId = string.IsNullOrWhiteSpace(_viewModel.SelectedModeLayoutId)
+                ? string.Empty
+                : _viewModel.SelectedModeLayoutId;
+
+            var updatedMode = _modeService.UpdateLayoutBinding(_viewModel.SelectedMode.Id, layoutId);
+            LoadModesIntoView(updatedMode.Id);
+            _viewModel.SetStatus(string.IsNullOrWhiteSpace(updatedMode.LayoutId)
+                ? $"已清除“{updatedMode.Name}”的布局绑定。"
+                : $"已保存“{updatedMode.Name}”的布局绑定。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"保存模式布局失败：{ex.Message}");
+        }
+    }
+
+    private void AddCustomMode_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        OpenCreateModeEditor();
+    }
+
+    private void EditCustomMode_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedMode is null)
+        {
+            _viewModel.SetStatus("请先选择一个模式。");
+            return;
+        }
+
+        if (_viewModel.SelectedMode.IsBuiltIn)
+        {
+            _viewModel.SetStatus("预设模式暂不支持编辑。");
+            return;
+        }
+
+        var editor = new ModeEditorWindow("编辑自定义模式", _viewModel.ModeLayoutOptions, _viewModel.SelectedMode)
+        {
+            Owner = this
+        };
+
+        if (editor.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var updatedMode = _modeService.UpdateCustomMode(
+                _viewModel.SelectedMode.Id,
+                editor.ModeName,
+                editor.Description,
+                editor.DesktopIconsVisible,
+                editor.TaskbarVisible,
+                editor.LayoutId);
+
+            if (string.Equals(_appSettings.DefaultModeId, updatedMode.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                _viewModel.SetDefaultModeName(updatedMode.Name);
+            }
+
+            if (string.Equals(_currentModeId, updatedMode.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                _viewModel.SetCurrentMode(updatedMode.Name);
+            }
+
+            LoadModesIntoView(updatedMode.Id);
+            _viewModel.SetStatus($"已更新自定义模式“{updatedMode.Name}”。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"更新自定义模式失败：{ex.Message}");
+        }
+    }
+
+    private void DeleteCustomMode_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedMode is null)
+        {
+            _viewModel.SetStatus("请先选择一个模式。");
+            return;
+        }
+
+        if (_viewModel.SelectedMode.IsBuiltIn)
+        {
+            _viewModel.SetStatus("预设模式暂不支持删除。");
+            return;
+        }
+
+        var mode = _viewModel.SelectedMode;
+        var result = System.Windows.MessageBox.Show(
+            this,
+            $"确定删除自定义模式“{mode.Name}”吗？",
+            "删除自定义模式",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (result != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            _modeService.DeleteCustomMode(mode.Id);
+            HandleDeletedModeReferences(mode.Id);
+            LoadModesIntoView();
+            _viewModel.SetStatus($"已删除自定义模式“{mode.Name}”。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"删除自定义模式失败：{ex.Message}");
         }
     }
 
@@ -347,6 +527,9 @@ public partial class MainWindow : System.Windows.Window
         _appSettings.ShowMainWindowHotkey = string.IsNullOrWhiteSpace(latest.ShowMainWindowHotkey)
             ? AppSettings.DefaultShowMainWindowHotkey
             : latest.ShowMainWindowHotkey;
+        _appSettings.DefaultModeId = string.IsNullOrWhiteSpace(latest.DefaultModeId)
+            ? AppSettings.DefaultModeIdValue
+            : latest.DefaultModeId;
 
         if (_desktopToggleHotkeyService is not null)
         {
@@ -388,6 +571,7 @@ public partial class MainWindow : System.Windows.Window
 
         LoadSettingsIntoView();
         _viewModel.SetHotkeys(_appSettings.DesktopToggleHotkey, _appSettings.ShowMainWindowHotkey);
+        LoadModesIntoView();
         _viewModel.SetStatus("设置已重新加载。");
     }
 
@@ -550,12 +734,16 @@ public partial class MainWindow : System.Windows.Window
         _viewModel.SetStartMinimizedToTray(_appSettings.StartMinimizedToTray);
         _viewModel.SetMinimizeToTrayOnMinimize(_appSettings.MinimizeToTrayOnMinimize);
         _viewModel.SetCloseToTrayOnClose(_appSettings.CloseToTrayOnClose);
+        _viewModel.SetDefaultModeId(string.IsNullOrWhiteSpace(_appSettings.DefaultModeId)
+            ? AppSettings.DefaultModeIdValue
+            : _appSettings.DefaultModeId);
         _viewModel.SetDesktopToggleHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.DesktopToggleHotkey)
             ? AppSettings.DefaultDesktopToggleHotkey
             : _appSettings.DesktopToggleHotkey);
         _viewModel.SetShowMainWindowHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.ShowMainWindowHotkey)
             ? AppSettings.DefaultShowMainWindowHotkey
             : _appSettings.ShowMainWindowHotkey);
+        _viewModel.SetDefaultModeName(FindModeName(_viewModel.DefaultModeId));
     }
 
     private void LoadLayoutsIntoView()
@@ -578,6 +766,49 @@ public partial class MainWindow : System.Windows.Window
             });
 
         _viewModel.SetLayouts(layouts);
+        _viewModel.SetModeLayoutOptions(BuildModeLayoutOptions());
+        if (_viewModel.SelectedMode is not null)
+        {
+            _viewModel.SetSelectedModeLayoutId(_viewModel.SelectedMode.LayoutId);
+        }
+        LoadModesIntoView(_viewModel.SelectedMode?.Id);
+    }
+
+    private void LoadModesIntoView(string? selectedModeId = null)
+    {
+        var layoutsById = _desktopLayoutService
+            .GetSavedLayouts()
+            .ToDictionary(layout => layout.Id, layout => layout.Name, StringComparer.OrdinalIgnoreCase);
+
+        var modes = _modeService
+            .GetModes()
+            .Select(mode => new DesktopModeViewModel
+            {
+                Id = mode.Id,
+                Name = mode.Name,
+                Description = mode.Description,
+                DesktopIconsVisible = mode.DesktopIconsVisible,
+                TaskbarVisible = mode.TaskbarVisible,
+                LayoutId = mode.LayoutId,
+                LayoutName = ResolveLayoutName(mode.LayoutId, layoutsById),
+                StateSummary = BuildModeStateSummary(mode, layoutsById),
+                IsDefault = string.Equals(_appSettings.DefaultModeId, mode.Id, StringComparison.OrdinalIgnoreCase),
+                IsActive = string.Equals(_currentModeId, mode.Id, StringComparison.OrdinalIgnoreCase),
+                IsBuiltIn = mode.IsBuiltIn
+            });
+
+        _viewModel.SetModes(modes);
+        if (!string.IsNullOrWhiteSpace(selectedModeId))
+        {
+            _viewModel.SelectedMode = _viewModel.Modes.FirstOrDefault(mode => string.Equals(mode.Id, selectedModeId, StringComparison.OrdinalIgnoreCase))
+                ?? _viewModel.SelectedMode;
+        }
+
+        _viewModel.SetModeLayoutOptions(BuildModeLayoutOptions());
+        _viewModel.SetModeOptions(BuildModeOptions());
+        _viewModel.SetSelectedModeLayoutId(_viewModel.SelectedMode?.LayoutId);
+        _viewModel.SetCurrentMode(FindModeName(_currentModeId));
+        _viewModel.SetDefaultModeName(FindModeName(_appSettings.DefaultModeId));
     }
 
     private async Task SaveLayoutWithPreviewAsync(DesktopLayoutSnapshot snapshot)
@@ -645,6 +876,85 @@ public partial class MainWindow : System.Windows.Window
         };
 
         parts.Add(layout.CreatedAt.ToString("yyyy-MM-dd HH:mm"));
+        return string.Join(" · ", parts);
+    }
+
+    private async Task ApplyModeAsync(string modeId, string statusFormat)
+    {
+        try
+        {
+            var mode = await _modeService.SwitchAsync(modeId);
+            _currentModeId = mode.Id;
+            RefreshDesktopIconState();
+            RefreshTaskbarState();
+            LoadModesIntoView(mode.Id);
+            _viewModel.SetStatus(string.Format(statusFormat, mode.Name));
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"切换模式失败：{ex.Message}");
+        }
+    }
+
+    private IEnumerable<ModeLayoutOptionViewModel> BuildModeLayoutOptions()
+    {
+        yield return new ModeLayoutOptionViewModel
+        {
+            Id = string.Empty,
+            Name = "不恢复布局"
+        };
+
+        foreach (var layout in _desktopLayoutService.GetSavedLayouts())
+        {
+            yield return new ModeLayoutOptionViewModel
+            {
+                Id = layout.Id,
+                Name = layout.Name
+            };
+        }
+    }
+
+    private IEnumerable<ModeOptionViewModel> BuildModeOptions()
+    {
+        foreach (var mode in _modeService.GetModes())
+        {
+            yield return new ModeOptionViewModel
+            {
+                Id = mode.Id,
+                Name = mode.Name
+            };
+        }
+    }
+
+    private string? FindModeName(string? modeId)
+    {
+        return _modeService
+            .GetModes()
+            .FirstOrDefault(mode => string.Equals(mode.Id, modeId, StringComparison.OrdinalIgnoreCase))
+            ?.Name;
+    }
+
+    private static string ResolveLayoutName(string? layoutId, IReadOnlyDictionary<string, string> layoutsById)
+    {
+        if (string.IsNullOrWhiteSpace(layoutId))
+        {
+            return "未绑定布局";
+        }
+
+        return layoutsById.TryGetValue(layoutId, out var name)
+            ? name
+            : "布局已丢失";
+    }
+
+    private static string BuildModeStateSummary(DesktopMode mode, IReadOnlyDictionary<string, string> layoutsById)
+    {
+        var parts = new List<string>
+        {
+            mode.DesktopIconsVisible ? "图标显示" : "图标隐藏",
+            mode.TaskbarVisible ? "任务栏显示" : "任务栏隐藏",
+            $"布局 {ResolveLayoutName(mode.LayoutId, layoutsById)}"
+        };
+
         return string.Join(" · ", parts);
     }
 
@@ -723,5 +1033,49 @@ public partial class MainWindow : System.Windows.Window
         };
 
         previewWindow.ShowDialog();
+    }
+
+    private void OpenCreateModeEditor()
+    {
+        var editor = new ModeEditorWindow("新建自定义模式", _viewModel.ModeLayoutOptions)
+        {
+            Owner = this
+        };
+
+        if (editor.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var createdMode = _modeService.CreateCustomMode(
+                editor.ModeName,
+                editor.Description,
+                editor.DesktopIconsVisible,
+                editor.TaskbarVisible,
+                editor.LayoutId);
+
+            LoadModesIntoView(createdMode.Id);
+            _viewModel.SetStatus($"已创建自定义模式“{createdMode.Name}”。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"创建自定义模式失败：{ex.Message}");
+        }
+    }
+
+    private void HandleDeletedModeReferences(string deletedModeId)
+    {
+        if (string.Equals(_appSettings.DefaultModeId, deletedModeId, StringComparison.OrdinalIgnoreCase))
+        {
+            _appSettings.DefaultModeId = AppSettings.DefaultModeIdValue;
+            _settingsStore.Save(_appSettings);
+        }
+
+        if (string.Equals(_currentModeId, deletedModeId, StringComparison.OrdinalIgnoreCase))
+        {
+            _currentModeId = null;
+        }
     }
 }

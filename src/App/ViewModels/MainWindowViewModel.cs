@@ -8,7 +8,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private string _layoutNameInput = string.Empty;
     private bool _launchAtStartupEnabled;
+    private string _defaultModeId = AppSettings.DefaultModeIdValue;
     private LayoutSummaryViewModel? _selectedLayout;
+    private DesktopModeViewModel? _selectedMode;
+    private string _selectedModeLayoutId = string.Empty;
     private bool _isDesktopIconsVisible;
     private bool _isTaskbarVisible;
     private bool _closeToTrayOnCloseEnabled;
@@ -20,6 +23,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _desktopIconStateText = "桌面图标状态：未读取";
     private string _taskbarStateText = "任务栏状态：未读取";
     private string _hotkeyText = "全局快捷键：未启用";
+    private string _currentModeText = "当前模式：未应用";
+    private string _defaultModeText = "默认模式：默认模式";
 
     public string AppName => "Workspace Manager";
 
@@ -79,6 +84,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _layoutNameInput = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string DefaultModeId
+    {
+        get => _defaultModeId;
+        set
+        {
+            if (_defaultModeId == value)
+            {
+                return;
+            }
+
+            _defaultModeId = value;
             OnPropertyChanged();
         }
     }
@@ -205,6 +225,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ObservableCollection<LayoutSummaryViewModel> SavedLayouts { get; } = [];
 
+    public ObservableCollection<DesktopModeViewModel> Modes { get; } = [];
+
+    public ObservableCollection<ModeLayoutOptionViewModel> ModeLayoutOptions { get; } = [];
+
+    public ObservableCollection<ModeOptionViewModel> ModeOptions { get; } = [];
+
     public LayoutSummaryViewModel? SelectedLayout
     {
         get => _selectedLayout;
@@ -220,6 +246,37 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public DesktopModeViewModel? SelectedMode
+    {
+        get => _selectedMode;
+        set
+        {
+            if (_selectedMode == value)
+            {
+                return;
+            }
+
+            _selectedMode = value;
+            OnPropertyChanged();
+            SelectedModeLayoutId = _selectedMode?.LayoutId ?? string.Empty;
+        }
+    }
+
+    public string SelectedModeLayoutId
+    {
+        get => _selectedModeLayoutId;
+        set
+        {
+            if (_selectedModeLayoutId == value)
+            {
+                return;
+            }
+
+            _selectedModeLayoutId = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string HotkeyText
     {
         get => _hotkeyText;
@@ -231,6 +288,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _hotkeyText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string CurrentModeText
+    {
+        get => _currentModeText;
+        private set
+        {
+            if (_currentModeText == value)
+            {
+                return;
+            }
+
+            _currentModeText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string DefaultModeText
+    {
+        get => _defaultModeText;
+        private set
+        {
+            if (_defaultModeText == value)
+            {
+                return;
+            }
+
+            _defaultModeText = value;
             OnPropertyChanged();
         }
     }
@@ -263,6 +350,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void SetLaunchAtStartup(bool enabled)
     {
         LaunchAtStartupEnabled = enabled;
+    }
+
+    public void SetDefaultModeId(string modeId)
+    {
+        DefaultModeId = string.IsNullOrWhiteSpace(modeId)
+            ? AppSettings.DefaultModeIdValue
+            : modeId;
     }
 
     public void SetStartMinimizedToTray(bool enabled)
@@ -304,6 +398,52 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         SelectedLayout = SavedLayouts.FirstOrDefault();
+    }
+
+    public void SetModes(IEnumerable<DesktopModeViewModel> modes)
+    {
+        var selectedModeId = SelectedMode?.Id;
+        Modes.Clear();
+        foreach (var mode in modes)
+        {
+            Modes.Add(mode);
+        }
+
+        SelectedMode = Modes.FirstOrDefault(mode => string.Equals(mode.Id, selectedModeId, StringComparison.OrdinalIgnoreCase))
+            ?? Modes.FirstOrDefault();
+    }
+
+    public void SetModeLayoutOptions(IEnumerable<ModeLayoutOptionViewModel> options)
+    {
+        ModeLayoutOptions.Clear();
+        foreach (var option in options)
+        {
+            ModeLayoutOptions.Add(option);
+        }
+    }
+
+    public void SetModeOptions(IEnumerable<ModeOptionViewModel> options)
+    {
+        ModeOptions.Clear();
+        foreach (var option in options)
+        {
+            ModeOptions.Add(option);
+        }
+    }
+
+    public void SetSelectedModeLayoutId(string? layoutId)
+    {
+        SelectedModeLayoutId = layoutId ?? string.Empty;
+    }
+
+    public void SetCurrentMode(string? modeName)
+    {
+        CurrentModeText = $"当前模式：{(string.IsNullOrWhiteSpace(modeName) ? "未应用" : modeName)}";
+    }
+
+    public void SetDefaultModeName(string? modeName)
+    {
+        DefaultModeText = $"默认模式：{(string.IsNullOrWhiteSpace(modeName) ? "未设置" : modeName)}";
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

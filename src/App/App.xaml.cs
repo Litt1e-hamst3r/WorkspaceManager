@@ -5,6 +5,8 @@ public partial class App : System.Windows.Application
     private DesktopLayoutService? _desktopLayoutService;
     private DesktopLayoutStore? _desktopLayoutStore;
     private DesktopLayoutPreviewService? _desktopLayoutPreviewService;
+    private ModeService? _modeService;
+    private ModeStore? _modeStore;
     private AppSettings? _settings;
     private AppSettingsStore? _settingsStore;
     private GlobalHotkeyService? _desktopToggleHotkeyService;
@@ -23,8 +25,10 @@ public partial class App : System.Windows.Application
         _startupRegistrationService = new StartupRegistrationService();
         _desktopLayoutStore = new DesktopLayoutStore();
         _desktopLayoutPreviewService = new DesktopLayoutPreviewService();
+        _modeStore = new ModeStore();
         _taskbarService = new TaskbarService();
         _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService);
+        _modeService = new ModeService(_modeStore, DesktopIconService, _taskbarService, _desktopLayoutService);
         _settings = _settingsStore.Load();
         _settings.LaunchAtStartup = _startupRegistrationService.IsEnabled();
         try
@@ -39,10 +43,16 @@ public partial class App : System.Windows.Application
             _settingsStore.Save(_settings);
         }
 
+        if (string.IsNullOrWhiteSpace(_settings.DefaultModeId))
+        {
+            _settings.DefaultModeId = AppSettings.DefaultModeIdValue;
+        }
+
         var mainWindow = new MainWindow(
             DesktopIconService,
             _taskbarService,
             _desktopLayoutService,
+            _modeService,
             _settings,
             _settingsStore,
             _startupRegistrationService);
@@ -54,6 +64,8 @@ public partial class App : System.Windows.Application
 
         _trayIconHost = new TrayIconHost(mainWindow, DesktopIconService, _taskbarService);
         _trayIconHost.Initialize();
+
+        mainWindow.ApplyConfiguredDefaultMode();
 
         if (_settings.StartMinimizedToTray)
         {
