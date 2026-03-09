@@ -14,66 +14,120 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Style="{StaticResource CardBorderStyle}" Padding="24">
+        <Border Style="{StaticResource CardBorderStyle}" Padding="20">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel>
-                    <Border Width="84"
-                            Height="30"
-                            Background="{StaticResource AccentSoftBrush}"
-                            CornerRadius="15"
-                            HorizontalAlignment="Left">
-                        <TextBlock Text="DESKTOP"
-                                   Foreground="{StaticResource AccentBrush}"
-                                   FontWeight="Bold"
-                                   FontSize="12"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <Border Width="84"
+                                Height="28"
+                                Background="{StaticResource AccentSoftBrush}"
+                                CornerRadius="14"
+                                HorizontalAlignment="Left">
+                            <TextBlock Text="DESKTOP"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontWeight="Bold"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Margin="0,12,0,0"
+                                   Text="{Binding AppName}"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="桌面图标、布局快照和启动设置的集中入口。"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            Margin="18,0,12,0"
+                            Padding="12,8"
+                            Background="{StaticResource SurfaceAltBrush}"
+                            BorderBrush="{StaticResource CardBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            VerticalAlignment="Top">
+                        <TextBlock Text="{Binding DesktopIconStateText}"
+                                   Foreground="{StaticResource StrongTextBrush}"
+                                   FontWeight="SemiBold" />
                     </Border>
 
-                    <TextBlock Margin="0,16,0,0"
-                               Text="{Binding AppName}"
-                               FontSize="30"
-                               FontWeight="SemiBold" />
-                    <TextBlock Margin="0,8,0,0"
-                               Text="把常用操作、布局快照和启动设置放到一个干净的桌面管理入口。"
-                               FontSize="14"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               TextWrapping="Wrap" />
-                </StackPanel>
+                    <Button Grid.Column="2"
+                            Width="96"
+                            Height="36"
+                            Content="{Binding HeaderToggleText}"
+                            Click="ToggleHeaderDetails_Click"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            VerticalAlignment="Top" />
+                </Grid>
 
-                <Border Grid.Column="1"
-                        MinWidth="260"
-                        Margin="24,0,0,0"
-                        Padding="18"
-                        Background="#0F172A"
-                        CornerRadius="18">
+                <Grid Grid.Row="1"
+                      Margin="0,18,0,0"
+                      Visibility="{Binding HeaderDetailsVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
                     <StackPanel>
-                        <TextBlock Text="当前状态"
-                                   Foreground="#94A3B8"
-                                   FontSize="12"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="{Binding DesktopIconStateText}"
-                                   Foreground="White"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
+                        <TextBlock Text="把常用操作、布局快照和启动设置放到一个干净的桌面管理入口。"
+                                   FontSize="14"
+                                   Foreground="{StaticResource MutedTextBrush}"
                                    TextWrapping="Wrap" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="{Binding HotkeyText}"
-                                   Foreground="#CBD5E1" />
+                        <TextBlock Margin="0,12,0,0"
+                                   Text="需要更多空间时，可以直接收起这块介绍区。"
+                                   Foreground="{StaticResource MutedTextBrush}" />
                     </StackPanel>
-                </Border>
+
+                    <Border Grid.Column="1"
+                            MinWidth="260"
+                            Margin="24,0,0,0"
+                            Padding="18"
+                            Background="#0F172A"
+                            CornerRadius="18">
+                        <StackPanel>
+                            <TextBlock Text="当前状态"
+                                       Foreground="#94A3B8"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding DesktopIconStateText}"
+                                       Foreground="White"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding TaskbarStateText}"
+                                       Foreground="#CBD5E1"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding HotkeyText}"
+                                       Foreground="#CBD5E1" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Grid>
         </Border>
 
         <TabControl Grid.Row="1" Margin="0,20,0,0">
             <TabItem Header="概览">
-                <Grid Margin="4,18,4,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="True"
+                              PanningMode="VerticalOnly">
+                    <Grid Margin="4,18,4,12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -81,6 +135,7 @@
 
                     <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -109,6 +164,14 @@
                                 <TextBlock Margin="0,10,0,0" Text="最小化和关闭都会隐藏到托盘，不会中断工作流。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
+
+                        <Border Grid.Column="3" Style="{StaticResource CardBorderStyle}" Margin="10,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="任务栏状态" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
+                                <TextBlock Margin="0,12,0,0" Text="{Binding TaskbarStateText}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0" Text="支持快速隐藏或恢复 Windows 任务栏。" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
                     </Grid>
 
                     <Grid Grid.Row="1" Margin="0,18,0,0">
@@ -124,6 +187,12 @@
 
                                 <WrapPanel Margin="0,18,0,0">
                                     <Button Width="160" Height="42" Content="切换桌面图标" Click="ToggleDesktopIcons_Click" />
+                                    <Button Width="140"
+                                            Height="42"
+                                            Margin="12,0,0,0"
+                                            Content="切换任务栏"
+                                            Click="ToggleTaskbar_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
                                     <Button Width="120"
                                             Height="42"
                                             Margin="12,0,0,0"
@@ -139,7 +208,7 @@
                                     <StackPanel>
                                         <TextBlock Text="提示" FontWeight="SemiBold" />
                                         <TextBlock Margin="0,8,0,0"
-                                                   Text="你现在可以从托盘、全局快捷键或主窗口按钮三种方式切换桌面图标。"
+                                                   Text="你现在可以从托盘或主窗口切换桌面图标与任务栏显示状态。"
                                                    Foreground="{StaticResource MutedTextBrush}"
                                                    TextWrapping="Wrap" />
                                     </StackPanel>
@@ -156,16 +225,22 @@
                                     <TextBlock Text="• 最小化自动进入托盘" Margin="0,0,0,10" />
                                     <TextBlock Text="• 关闭窗口不退出程序" Margin="0,0,0,10" />
                                     <TextBlock Text="• 双击托盘图标恢复窗口" Margin="0,0,0,10" />
+                                    <TextBlock Text="• 任务栏可单独隐藏或恢复" Margin="0,0,0,10" />
                                     <TextBlock Text="• 开机自启与启动最小化可配置" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
                     </Grid>
-                </Grid>
+                    </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="布局">
-                <Grid Margin="4,18,4,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="False"
+                              PanningMode="VerticalOnly">
+                    <Grid Margin="4,18,4,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" />
                         <ColumnDefinition Width="3*" />
@@ -173,7 +248,16 @@
 
                     <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
                         <StackPanel>
-                            <TextBlock Text="保存当前布局" FontSize="18" FontWeight="SemiBold" />
+                            <Border Style="{StaticResource PillBorderStyle}"
+                                    Background="{StaticResource AccentSoftBrush}"
+                                    BorderBrush="{StaticResource AccentSoftBrush}"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="布局快照"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontWeight="SemiBold" />
+                            </Border>
+
+                            <TextBlock Margin="0,16,0,0" Text="保存当前布局" FontSize="18" FontWeight="SemiBold" />
                             <TextBlock Margin="0,8,0,0"
                                        Text="把当前桌面图标位置保存成快照，之后可以一键恢复。"
                                        Foreground="{StaticResource MutedTextBrush}"
@@ -213,6 +297,7 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
@@ -230,50 +315,155 @@
                                                Foreground="{StaticResource MutedTextBrush}" />
                                 </StackPanel>
 
-                                <Border Grid.Column="1"
-                                        Padding="12,8"
-                                        Background="{StaticResource SurfaceAltBrush}"
-                                        BorderBrush="{StaticResource CardBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="12">
+                                <Border Grid.Column="1" Style="{StaticResource PillBorderStyle}">
                                     <TextBlock Text="{Binding SavedLayouts.Count, StringFormat=共 {0} 项}" Foreground="{StaticResource MutedTextBrush}" />
                                 </Border>
                             </Grid>
 
-                            <ListBox Grid.Row="1"
-                                     Margin="0,18,0,0"
-                                     ItemsSource="{Binding SavedLayouts}"
-                                     SelectedItem="{Binding SelectedLayout}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type viewModels:LayoutSummaryViewModel}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                            <Border Grid.Row="1"
+                                    Margin="0,18,0,0"
+                                    Padding="14"
+                                    Background="{StaticResource SurfaceAltBrush}"
+                                    BorderBrush="{StaticResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="16">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
 
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" />
-                                                <TextBlock Margin="0,6,0,0"
-                                                           Text="{Binding DisplayText}"
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SelectedLayout.Name, TargetNullValue=选择布局后查看预览}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding SelectedLayout.DisplayText, TargetNullValue=从下方列表选择一个布局快照。}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <Border Grid.Column="1"
+                                                Style="{StaticResource PillBorderStyle}"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding SelectedLayout.ItemCount, TargetNullValue=0, StringFormat=预览 {0} 个图标}"
+                                                       Foreground="{StaticResource StrongTextBrush}"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Grid.Row="1"
+                                            Margin="0,14,0,0"
+                                            Background="{StaticResource SurfaceBrush}"
+                                            BorderBrush="{StaticResource CardBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="16"
+                                            ClipToBounds="True"
+                                            Cursor="Hand"
+                                            MouseLeftButtonUp="SelectedLayoutPreview_MouseLeftButtonUp">
+                                        <Grid Height="220">
+                                            <Border Background="{StaticResource SurfaceAltBrush}" />
+                                            <StackPanel VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center">
+                                                <TextBlock Text="暂无大图预览"
                                                            Foreground="{StaticResource MutedTextBrush}"
-                                                           TextWrapping="Wrap" />
+                                                           FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" />
+                                                <TextBlock Margin="0,6,0,0"
+                                                           Text="选择或重新保存布局后查看"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center" />
                                             </StackPanel>
-
-                                            <Border Grid.Column="1"
-                                                    Padding="10,6"
-                                                    Background="White"
-                                                    BorderBrush="{StaticResource CardBorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="12">
-                                                <TextBlock Text="{Binding ItemCount, StringFormat={}{0} 个}" Foreground="{StaticResource MutedTextBrush}" />
-                                            </Border>
+                                            <Image Source="{Binding SelectedLayout.PreviewImage}"
+                                                   Stretch="UniformToFill" />
                                         </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                    </Border>
+                                </Grid>
+                            </Border>
 
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,18,0,0">
+                            <Border Grid.Row="2"
+                                    Margin="0,18,0,0"
+                                    Padding="12"
+                                    MaxHeight="360"
+                                    Background="{StaticResource SurfaceAltBrush}"
+                                    BorderBrush="{StaticResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="16">
+                                <ListBox ItemsSource="{Binding SavedLayouts}"
+                                         SelectedItem="{Binding SelectedLayout}"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         ScrollViewer.CanContentScroll="True">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type viewModels:LayoutSummaryViewModel}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="160" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Width="148"
+                                                        Height="88"
+                                                        Background="{StaticResource SurfaceBrush}"
+                                                        BorderBrush="{StaticResource CardBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="14"
+                                                        ClipToBounds="True"
+                                                        VerticalAlignment="Top"
+                                                        Cursor="Hand"
+                                                        MouseLeftButtonUp="LayoutItemPreview_MouseLeftButtonUp">
+                                                    <Grid>
+                                                        <Border Background="{StaticResource SurfaceAltBrush}" />
+                                                        <StackPanel VerticalAlignment="Center"
+                                                                    HorizontalAlignment="Center">
+                                                            <TextBlock Text="暂无预览"
+                                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                                       FontWeight="SemiBold"
+                                                                       HorizontalAlignment="Center" />
+                                                            <TextBlock Margin="0,4,0,0"
+                                                                       Text="保存时自动生成"
+                                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                                       FontSize="11"
+                                                                       HorizontalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <Image Source="{Binding ThumbnailImage}"
+                                                               Stretch="UniformToFill" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Margin="14,0,12,0">
+                                                    <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" />
+                                                    <TextBlock Margin="0,6,0,0"
+                                                               Text="{Binding DisplayText}"
+                                                               Foreground="{StaticResource MutedTextBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,10,0,0"
+                                                               Text="桌面图标位置快照"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource MutedTextBrush}" />
+                                                </StackPanel>
+
+                                                <Border Grid.Column="2"
+                                                        Style="{StaticResource PillBorderStyle}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="{Binding ItemCount, StringFormat={}{0} 个图标}"
+                                                               Foreground="{StaticResource StrongTextBrush}"
+                                                               FontWeight="SemiBold" />
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,18,0,0">
                                 <Button Width="120" Height="42" Content="恢复布局" Click="RestoreLayout_Click" />
                                 <Button Width="120"
                                         Height="42"
@@ -284,11 +474,16 @@
                             </StackPanel>
                         </Grid>
                     </Border>
-                </Grid>
+                    </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="设置">
-                <Grid Margin="4,18,4,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="True"
+                              PanningMode="VerticalOnly">
+                    <Grid Margin="4,18,4,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -340,7 +535,8 @@
                             </WrapPanel>
                         </StackPanel>
                     </Border>
-                </Grid>
+                    </Grid>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </Grid>

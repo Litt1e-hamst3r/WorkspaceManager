@@ -1,20 +1,27 @@
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 
 namespace WorkspaceManager.App.ViewModels;
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
+    private bool _isHeaderExpanded;
     private string _layoutNameInput = string.Empty;
     private bool _launchAtStartupEnabled;
     private LayoutSummaryViewModel? _selectedLayout;
     private bool _startMinimizedToTrayEnabled;
     private string _statusMessage = "桌面图标、托盘和快捷键原型已可用。";
     private string _desktopIconStateText = "桌面图标状态：未读取";
+    private string _taskbarStateText = "任务栏状态：未读取";
     private string _hotkeyText = "全局快捷键：未启用";
 
     public string AppName => "Workspace Manager";
+
+    public Visibility HeaderDetailsVisibility => _isHeaderExpanded ? Visibility.Visible : Visibility.Collapsed;
+
+    public string HeaderToggleText => _isHeaderExpanded ? "收起简介" : "展开简介";
 
     public string StatusMessage
     {
@@ -57,6 +64,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _layoutNameInput = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string TaskbarStateText
+    {
+        get => _taskbarStateText;
+        private set
+        {
+            if (_taskbarStateText == value)
+            {
+                return;
+            }
+
+            _taskbarStateText = value;
             OnPropertyChanged();
         }
     }
@@ -136,6 +158,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         StatusMessage = message;
     }
 
+    public void SetTaskbarState(bool isVisible)
+    {
+        TaskbarStateText = $"任务栏状态：{(isVisible ? "显示中" : "已隐藏")}";
+    }
+
     public void SetHotkey(string hotkey)
     {
         HotkeyText = $"全局快捷键：{hotkey}";
@@ -154,6 +181,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void SetLayoutNameInput(string value)
     {
         LayoutNameInput = value;
+    }
+
+    public void ToggleHeaderExpanded()
+    {
+        _isHeaderExpanded = !_isHeaderExpanded;
+        OnPropertyChanged(nameof(HeaderDetailsVisibility));
+        OnPropertyChanged(nameof(HeaderToggleText));
     }
 
     public void SetLayouts(IEnumerable<LayoutSummaryViewModel> layouts)

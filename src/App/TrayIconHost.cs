@@ -8,19 +8,22 @@ public sealed class TrayIconHost : IDisposable
 {
     private readonly MainWindow _mainWindow;
     private readonly DesktopIconService _desktopIconService;
+    private readonly TaskbarService _taskbarService;
     private NotifyIcon? _notifyIcon;
     private bool _hasShownTrayHint;
 
-    public TrayIconHost(MainWindow mainWindow, DesktopIconService desktopIconService)
+    public TrayIconHost(MainWindow mainWindow, DesktopIconService desktopIconService, TaskbarService taskbarService)
     {
         _mainWindow = mainWindow;
         _desktopIconService = desktopIconService;
+        _taskbarService = taskbarService;
     }
 
     public void Initialize()
     {
         var contextMenu = new ContextMenuStrip();
         contextMenu.Items.Add("切换桌面图标", null, async (_, _) => await ToggleDesktopIconsAsync());
+        contextMenu.Items.Add("切换任务栏", null, async (_, _) => await ToggleTaskbarAsync());
         contextMenu.Items.Add("显示主窗口", null, (_, _) => ShowMainWindow());
         contextMenu.Items.Add("退出", null, (_, _) => ExitApplication());
 
@@ -69,6 +72,23 @@ public sealed class TrayIconHost : IDisposable
     private void ShowMainWindow()
     {
         _mainWindow.ShowFromTray();
+    }
+
+    private async Task ToggleTaskbarAsync()
+    {
+        try
+        {
+            await _taskbarService.ToggleAsync();
+            _mainWindow.Dispatcher.Invoke(_mainWindow.RefreshTaskbarState);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"切换任务栏失败：{ex.Message}",
+                "Workspace Manager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
     }
 
     private void ExitApplication()

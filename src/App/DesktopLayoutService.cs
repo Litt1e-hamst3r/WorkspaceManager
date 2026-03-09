@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
+using System.IO;
 using System.Windows;
 
 namespace WorkspaceManager.App;
@@ -19,10 +20,14 @@ public sealed class DesktopLayoutService
     private const uint PageReadWrite = 0x04;
 
     private readonly DesktopLayoutStore _layoutStore;
+    private readonly DesktopLayoutPreviewService _previewService;
 
-    public DesktopLayoutService(DesktopLayoutStore layoutStore)
+    public DesktopLayoutService(
+        DesktopLayoutStore layoutStore,
+        DesktopLayoutPreviewService previewService)
     {
         _layoutStore = layoutStore;
+        _previewService = previewService;
     }
 
     public IReadOnlyList<DesktopLayoutSnapshot> GetSavedLayouts()
@@ -59,6 +64,7 @@ public sealed class DesktopLayoutService
 
     public void Save(DesktopLayoutSnapshot snapshot)
     {
+        TryCapturePreview(snapshot);
         _layoutStore.Save(snapshot);
     }
 
@@ -94,6 +100,28 @@ public sealed class DesktopLayoutService
     public void Delete(string id)
     {
         _layoutStore.Delete(id);
+    }
+
+    public string? GetPreviewPath(DesktopLayoutSnapshot snapshot)
+    {
+        var previewPath = _layoutStore.GetPreviewPath(snapshot.PreviewImageFileName);
+        return previewPath is not null && File.Exists(previewPath)
+            ? previewPath
+            : null;
+    }
+
+    private void TryCapturePreview(DesktopLayoutSnapshot snapshot)
+    {
+        try
+        {
+            var previewPath = _layoutStore.GetPreviewPathForId(snapshot.Id);
+            _previewService.CaptureTo(previewPath);
+            snapshot.PreviewImageFileName = Path.GetFileName(previewPath);
+        }
+        catch
+        {
+            snapshot.PreviewImageFileName = string.Empty;
+        }
     }
 
     private static List<DesktopLayoutItem> ReadDesktopItems(IntPtr listViewHandle)

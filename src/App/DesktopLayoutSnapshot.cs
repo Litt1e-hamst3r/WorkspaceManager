@@ -6,6 +6,8 @@ public sealed class DesktopLayoutSnapshot
 
     public string Name { get; set; } = string.Empty;
 
+    public string PreviewImageFileName { get; set; } = string.Empty;
+
     public int ResolutionWidth { get; set; }
 
     public int ResolutionHeight { get; set; }

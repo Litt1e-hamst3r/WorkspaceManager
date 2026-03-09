@@ -1,3 +1,5 @@
+using System.Windows.Media;
+
 namespace WorkspaceManager.App.ViewModels;
 
 public sealed class LayoutSummaryViewModel
@@ -5,6 +7,12 @@ public sealed class LayoutSummaryViewModel
     public string Id { get; init; } = string.Empty;
 
     public string Name { get; init; } = string.Empty;
+
+    public string PreviewImagePath { get; init; } = string.Empty;
+
+    public ImageSource? ThumbnailImage { get; init; }
+
+    public ImageSource? PreviewImage { get; init; }
 
     public int ItemCount { get; init; }
 

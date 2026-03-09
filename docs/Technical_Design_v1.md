@@ -48,6 +48,7 @@
 - `TrayService`
 - `HotkeyService`
 - `DesktopIconService`
+- `TaskbarService`
 - `DesktopLayoutService`
 - `ModeService`
 - `RuleEngineService`
@@ -102,6 +103,7 @@ docs/
 字段建议：
 - `Id`
 - `Name`
+- `PreviewImageFileName`
 - `ResolutionWidth`
 - `ResolutionHeight`
 - `CreatedAt`
@@ -154,7 +156,17 @@ docs/
 - `Task SetVisibleAsync(bool visible)`
 - `Task ToggleAsync()`
 
-## 6.2 `DesktopLayoutService`
+## 6.2 `TaskbarService`
+
+职责：
+- 获取任务栏当前显示状态
+- 切换主任务栏与副任务栏显示/隐藏
+
+接口建议：
+- `bool IsVisible()`
+- `Task SetVisibleAsync(bool visible)`
+- `Task ToggleAsync()`
+## 6.3 `DesktopLayoutService`
 
 职责：
 - 读取当前桌面图标布局
@@ -168,7 +180,7 @@ docs/
 - `Task RestoreAsync(string layoutId)`
 - `Task<IReadOnlyList<LayoutConflict>> ValidateAsync(string layoutId)`
 
-## 6.3 `ModeService`
+## 6.4 `ModeService`
 
 职责：
 - 加载模式配置
@@ -181,7 +193,7 @@ docs/
 - `Task SwitchAsync(string modeId)`
 - `Task RevertLastAsync()`
 
-## 6.4 `RuleEngineService`
+## 6.5 `RuleEngineService`
 
 职责：
 - 解析规则
@@ -192,7 +204,7 @@ docs/
 - `RuleMatchResult Match(FileContext context)`
 - `IReadOnlyList<OrganizeAction> BuildActions(IEnumerable<FileContext> files)`
 
-## 6.5 `FileOrganizerService`
+## 6.6 `FileOrganizerService`
 
 职责：
 - 执行手动或自动整理动作
@@ -203,7 +215,7 @@ docs/
 - `Task<OperationRecord> OrganizeDesktopAsync(OrganizeRequest request)`
 - `Task UndoAsync(string operationId)`
 
-## 6.6 `FileWatchService`
+## 6.7 `FileWatchService`
 
 职责：
 - 监听桌面目录变化
@@ -214,14 +226,14 @@ docs/
 - `Task StartAsync()`
 - `Task StopAsync()`
 
-## 6.7 `TrayService`
+## 6.8 `TrayService`
 
 职责：
 - 托盘图标初始化
 - 菜单项绑定命令
 - 托盘状态反馈
 
-## 6.8 `HotkeyService`
+## 6.9 `HotkeyService`
 
 职责：
 - 注册全局快捷键
@@ -242,6 +254,9 @@ data/
   layouts/
     default.json
     work.json
+  layout-previews/
+    default.png
+    work.png
   operations/
     2026-03-09-001.json
 logs/
@@ -253,6 +268,7 @@ logs/
 - `modes.json`：模式定义
 - `rules.json`：整理规则定义
 - `layouts/*.json`：布局快照
+- `layout-previews/*.png`：布局保存时生成的桌面缩略图
 - `operations/*.json`：可撤销操作记录
 - `logs/*.log`：运行与异常日志
 
@@ -283,13 +299,17 @@ logs/
 ## 9.2 布局读写
 - 读取桌面图标列表与位置
 - 将位置持久化为布局快照
+- 保存布局时短暂隐藏主窗口并截取桌面缩略图，用于列表预览
 - 恢复时按项目匹配并设置坐标
 
-## 9.3 全局热键
+## 9.3 任务栏控制
+- 通过 `Shell_TrayWnd` 与 `Shell_SecondaryTrayWnd` 控制任务栏显隐
+- 主窗口与托盘菜单共用同一服务，保持状态一致
+## 9.4 全局热键
 - 基于 Win32 热键注册机制
 - 应用需维护热键生命周期和冲突处理
 
-## 9.4 开机自启
+## 9.5 开机自启
 - 优先通过当前用户启动项或注册表实现
 - 需避免重复注册与脏数据残留
 
