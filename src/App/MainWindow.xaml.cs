@@ -202,6 +202,11 @@ public partial class MainWindow : System.Windows.Window
             var normalizedDesktopToggleHotkey = GlobalHotkeyService.Normalize(_viewModel.DesktopToggleHotkeyInput);
             var normalizedShowMainWindowHotkey = GlobalHotkeyService.Normalize(_viewModel.ShowMainWindowHotkeyInput);
 
+            if (string.Equals(normalizedDesktopToggleHotkey, normalizedShowMainWindowHotkey, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("两个快捷键不能设置成相同组合。");
+            }
+
             _desktopToggleHotkeyService?.UpdateHotkey(normalizedDesktopToggleHotkey);
 
             try
@@ -251,6 +256,80 @@ public partial class MainWindow : System.Windows.Window
                 _showMainWindowHotkeyService?.DisplayText ?? previousShowMainWindowHotkey);
             _viewModel.SetStatus($"保存设置失败：{ex.Message}");
         }
+    }
+
+    private void HotkeyCapture_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (!textBox.IsKeyboardFocusWithin)
+        {
+            e.Handled = true;
+            textBox.Focus();
+        }
+    }
+
+    private void HotkeyCapture_GotKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        textBox.SelectAll();
+        _viewModel.SetStatus(BuildHotkeyCaptureFocusMessage(textBox.Tag as string));
+    }
+
+    private void HotkeyCapture_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (e.Key == System.Windows.Input.Key.Tab)
+        {
+            return;
+        }
+
+        if (e.Key == System.Windows.Input.Key.Escape
+            && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.None)
+        {
+            System.Windows.Input.Keyboard.ClearFocus();
+            _viewModel.SetStatus("已取消本次快捷键录入。");
+            e.Handled = true;
+            return;
+        }
+
+        var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+        if (IsModifierOnlyKey(key))
+        {
+            _viewModel.SetStatus("请继续按主按键，例如 Ctrl+Shift+D。");
+            e.Handled = true;
+            return;
+        }
+
+        try
+        {
+            var capturedHotkey = GlobalHotkeyService.Normalize(System.Windows.Input.Keyboard.Modifiers, key);
+            ApplyCapturedHotkey(textBox.Tag as string, capturedHotkey);
+            textBox.SelectAll();
+            _viewModel.SetStatus($"已捕获快捷键：{capturedHotkey}。点击“保存设置”后生效。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"快捷键录入失败：{ex.Message}");
+        }
+
+        e.Handled = true;
+    }
+
+    private void HotkeyCapture_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = true;
     }
 
     private void ReloadSettings_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -567,6 +646,41 @@ public partial class MainWindow : System.Windows.Window
 
         parts.Add(layout.CreatedAt.ToString("yyyy-MM-dd HH:mm"));
         return string.Join(" · ", parts);
+    }
+
+    private void ApplyCapturedHotkey(string? target, string hotkey)
+    {
+        switch (target)
+        {
+            case "DesktopToggle":
+                _viewModel.SetDesktopToggleHotkeyInput(hotkey);
+                break;
+            case "ShowMainWindow":
+                _viewModel.SetShowMainWindowHotkeyInput(hotkey);
+                break;
+        }
+    }
+
+    private static bool IsModifierOnlyKey(System.Windows.Input.Key key)
+    {
+        return key is System.Windows.Input.Key.LeftCtrl
+            or System.Windows.Input.Key.RightCtrl
+            or System.Windows.Input.Key.LeftAlt
+            or System.Windows.Input.Key.RightAlt
+            or System.Windows.Input.Key.LeftShift
+            or System.Windows.Input.Key.RightShift
+            or System.Windows.Input.Key.LWin
+            or System.Windows.Input.Key.RWin;
+    }
+
+    private static string BuildHotkeyCaptureFocusMessage(string? target)
+    {
+        return target switch
+        {
+            "DesktopToggle" => "已进入桌面图标快捷键录入，直接按组合键。",
+            "ShowMainWindow" => "已进入主窗口快捷键录入，直接按组合键。",
+            _ => "已进入快捷键录入，直接按组合键。"
+        };
     }
 
     private void OpenPreviewWindow(LayoutSummaryViewModel? layout)

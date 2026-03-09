@@ -567,15 +567,31 @@
                             <TextBlock Margin="0,18,0,0" Text="桌面图标切换快捷键" FontWeight="SemiBold" />
                             <TextBox Margin="0,8,0,0"
                                      Height="40"
+                                     IsReadOnly="True"
+                                     Cursor="Hand"
+                                     ToolTip="点击后直接按组合键"
+                                     PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
+                                     GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
+                                     PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
+                                     PreviewTextInput="HotkeyCapture_PreviewTextInput"
+                                     Tag="DesktopToggle"
                                      Text="{Binding DesktopToggleHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Margin="0,8,0,0"
-                                       Text="支持 Ctrl、Alt、Shift、Win 组合，例如 Ctrl+Shift+D、Alt+F2。"
+                                       Text="点击输入框后直接按组合键即可录入，支持 Ctrl、Alt、Shift、Win。"
                                        Foreground="{StaticResource MutedTextBrush}"
                                        TextWrapping="Wrap" />
 
                             <TextBlock Margin="0,18,0,0" Text="显示主窗口快捷键" FontWeight="SemiBold" />
                             <TextBox Margin="0,8,0,0"
                                      Height="40"
+                                     IsReadOnly="True"
+                                     Cursor="Hand"
+                                     ToolTip="点击后直接按组合键"
+                                     PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
+                                     GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
+                                     PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
+                                     PreviewTextInput="HotkeyCapture_PreviewTextInput"
+                                     Tag="ShowMainWindow"
                                      Text="{Binding ShowMainWindowHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Margin="0,8,0,0"
                                        Text="当任务栏被隐藏或窗口已缩到托盘时，可用这个快捷键直接拉回主窗口。"
@@ -589,7 +605,7 @@
                                 <StackPanel>
                                     <TextBlock Text="输入规则" FontWeight="SemiBold" />
                                     <TextBlock Margin="0,8,0,0"
-                                               Text="两个快捷键都必须包含至少一个修饰键和一个主按键。保存时会自动规范成标准格式。"
+                                               Text="两个快捷键都必须包含至少一个修饰键和一个主按键，按 Esc 可取消本次录入。"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                TextWrapping="Wrap" />
                                 </StackPanel>

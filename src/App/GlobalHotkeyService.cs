@@ -85,6 +85,11 @@ public sealed class GlobalHotkeyService : IDisposable
         return Parse(hotkeyText).DisplayText;
     }
 
+    public static string Normalize(ModifierKeys modifiers, Key key)
+    {
+        return Parse(modifiers, key).DisplayText;
+    }
+
     public void Dispose()
     {
         if (_source is null)
@@ -185,6 +190,50 @@ public sealed class GlobalHotkeyService : IDisposable
         return new HotkeyDefinition(modifiers, key.Value, string.Join("+", labels));
     }
 
+    private static HotkeyDefinition Parse(ModifierKeys modifiers, Key key)
+    {
+        var normalizedKey = NormalizeInputKey(key);
+        if (IsModifierKey(normalizedKey))
+        {
+            throw new InvalidOperationException("请在修饰键之外再按一个主按键。");
+        }
+
+        uint nativeModifiers = 0;
+        var labels = new List<string>();
+
+        if (modifiers.HasFlag(ModifierKeys.Control))
+        {
+            nativeModifiers |= ModControl;
+            labels.Add("Ctrl");
+        }
+
+        if (modifiers.HasFlag(ModifierKeys.Alt))
+        {
+            nativeModifiers |= ModAlt;
+            labels.Add("Alt");
+        }
+
+        if (modifiers.HasFlag(ModifierKeys.Shift))
+        {
+            nativeModifiers |= ModShift;
+            labels.Add("Shift");
+        }
+
+        if (modifiers.HasFlag(ModifierKeys.Windows))
+        {
+            nativeModifiers |= ModWin;
+            labels.Add("Win");
+        }
+
+        if (nativeModifiers == 0)
+        {
+            throw new InvalidOperationException("全局快捷键至少需要一个修饰键，例如 Ctrl 或 Alt。");
+        }
+
+        labels.Add(FormatKeyLabel(normalizedKey));
+        return new HotkeyDefinition(nativeModifiers, normalizedKey, string.Join("+", labels));
+    }
+
     private static bool TryParseModifier(string value, out uint modifier, out string label)
     {
         switch (value.Trim().ToUpperInvariant())
@@ -266,6 +315,30 @@ public sealed class GlobalHotkeyService : IDisposable
             Key.PageDown => "PageDown",
             _ => keyName
         };
+    }
+
+    private static Key NormalizeInputKey(Key key)
+    {
+        return key switch
+        {
+            Key.LeftCtrl or Key.RightCtrl => Key.LeftCtrl,
+            Key.LeftAlt or Key.RightAlt => Key.LeftAlt,
+            Key.LeftShift or Key.RightShift => Key.LeftShift,
+            Key.LWin or Key.RWin => Key.LWin,
+            _ => key
+        };
+    }
+
+    private static bool IsModifierKey(Key key)
+    {
+        return key is Key.LeftCtrl
+            or Key.RightCtrl
+            or Key.LeftAlt
+            or Key.RightAlt
+            or Key.LeftShift
+            or Key.RightShift
+            or Key.LWin
+            or Key.RWin;
     }
 
     private readonly record struct HotkeyDefinition(uint Modifiers, Key Key, string DisplayText);
