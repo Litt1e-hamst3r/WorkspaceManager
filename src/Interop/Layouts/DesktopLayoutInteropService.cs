@@ -1,12 +1,11 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-using System.IO;
-using System.Windows;
+using WorkspaceManager.Domain.Layouts;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Interop.Layouts;
 
-public sealed class DesktopLayoutService
+public sealed class DesktopLayoutInteropService
 {
     private const int LvmFirst = 0x1000;
     private const int LvmGetItemCount = LvmFirst + 4;
@@ -19,23 +18,7 @@ public sealed class DesktopLayoutService
     private const uint MemRelease = 0x8000;
     private const uint PageReadWrite = 0x04;
 
-    private readonly DesktopLayoutStore _layoutStore;
-    private readonly DesktopLayoutPreviewService _previewService;
-
-    public DesktopLayoutService(
-        DesktopLayoutStore layoutStore,
-        DesktopLayoutPreviewService previewService)
-    {
-        _layoutStore = layoutStore;
-        _previewService = previewService;
-    }
-
-    public IReadOnlyList<DesktopLayoutSnapshot> GetSavedLayouts()
-    {
-        return _layoutStore.GetAll();
-    }
-
-    public DesktopLayoutSnapshot Capture(string? name = null)
+    public IReadOnlyList<DesktopLayoutItem> CaptureItems()
     {
         var listViewHandle = FindDesktopListView();
         if (listViewHandle == IntPtr.Zero)
@@ -49,30 +32,11 @@ public sealed class DesktopLayoutService
             throw new InvalidOperationException("当前未读取到任何桌面图标。");
         }
 
-        return new DesktopLayoutSnapshot
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            Name = string.IsNullOrWhiteSpace(name)
-                ? $"布局 {DateTime.Now:yyyy-MM-dd HH:mm:ss}"
-                : name.Trim(),
-            ResolutionWidth = (int)SystemParameters.PrimaryScreenWidth,
-            ResolutionHeight = (int)SystemParameters.PrimaryScreenHeight,
-            CreatedAt = DateTimeOffset.Now,
-            Items = items
-        };
+        return items;
     }
 
-    public void Save(DesktopLayoutSnapshot snapshot)
+    public void RestoreItems(IReadOnlyList<DesktopLayoutItem> items)
     {
-        TryCapturePreview(snapshot);
-        _layoutStore.Save(snapshot);
-    }
-
-    public void Restore(string id)
-    {
-        var snapshot = _layoutStore.Load(id)
-            ?? throw new InvalidOperationException("未找到指定布局。");
-
         var listViewHandle = FindDesktopListView();
         if (listViewHandle == IntPtr.Zero)
         {
@@ -80,7 +44,7 @@ public sealed class DesktopLayoutService
         }
 
         var currentItems = ReadDesktopItemDescriptors(listViewHandle);
-        var snapshotMap = snapshot.Items.ToDictionary(item => item.DisplayName, StringComparer.OrdinalIgnoreCase);
+        var snapshotMap = items.ToDictionary(item => item.DisplayName, StringComparer.OrdinalIgnoreCase);
 
         foreach (var currentItem in currentItems)
         {
@@ -94,33 +58,6 @@ public sealed class DesktopLayoutService
                 LvmSetItemPosition,
                 (IntPtr)currentItem.Index,
                 MakeLParam(savedItem.PositionX, savedItem.PositionY));
-        }
-    }
-
-    public void Delete(string id)
-    {
-        _layoutStore.Delete(id);
-    }
-
-    public string? GetPreviewPath(DesktopLayoutSnapshot snapshot)
-    {
-        var previewPath = _layoutStore.GetPreviewPath(snapshot.PreviewImageFileName);
-        return previewPath is not null && File.Exists(previewPath)
-            ? previewPath
-            : null;
-    }
-
-    private void TryCapturePreview(DesktopLayoutSnapshot snapshot)
-    {
-        try
-        {
-            var previewPath = _layoutStore.GetPreviewPathForId(snapshot.Id);
-            _previewService.CaptureTo(previewPath);
-            snapshot.PreviewImageFileName = Path.GetFileName(previewPath);
-        }
-        catch
-        {
-            snapshot.PreviewImageFileName = string.Empty;
         }
     }
 

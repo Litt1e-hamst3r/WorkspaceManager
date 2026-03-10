@@ -1,4 +1,4 @@
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Domain.Layouts;
 
 public sealed class DesktopLayoutSnapshot
 {

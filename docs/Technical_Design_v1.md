@@ -82,6 +82,18 @@ docs/
 - `Infrastructure`：JSON 配置、日志、文件访问、时间与系统抽象
 - `Interop`：桌面窗口句柄、热键、Explorer 交互、P/Invoke 封装
 
+### 4.2 当前实现状态
+- 当前仍以 `src/App/App.csproj` 作为单一可执行项目
+- `src/App/` 保留 WPF 启动入口与窗口代码，承担组合根职责
+- `src/UI/` 承载 ViewModel 与托盘宿主
+- `src/UI/Services/` 承载窗口数据装配与预览图加载等界面辅助服务
+- `src/Application/` 承载布局与模式编排服务
+- `src/Domain/` 承载布局快照、桌面模式等领域模型
+- `src/Infrastructure/` 承载设置、模式、布局的 JSON 持久化
+- `src/Interop/` 承载桌面图标、任务栏、布局读写、热键、自启动等 Windows 交互
+
+本阶段目标是先把 `src/App/` 从“功能堆放区”收敛成“启动与窗口层”，暂不一次性切成多项目引用结构。
+
 ## 5. 核心领域模型
 
 ## 5.1 桌面模式 `DesktopMode`

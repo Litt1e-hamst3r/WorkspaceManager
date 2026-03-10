@@ -1,7 +1,8 @@
 using System.IO;
 using System.Text.Json;
+using WorkspaceManager.Domain.Modes;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Infrastructure.Modes;
 
 public sealed class ModeStore
 {

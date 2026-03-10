@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Interop.Startup;
 
 public sealed class StartupRegistrationService
 {

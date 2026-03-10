@@ -1,7 +1,7 @@
 <Window x:Class="WorkspaceManager.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:viewModels="clr-namespace:WorkspaceManager.App.ViewModels"
+        xmlns:viewModels="clr-namespace:WorkspaceManager.UI.ViewModels"
         Title="Workspace Manager"
         Height="640"
         Width="920"

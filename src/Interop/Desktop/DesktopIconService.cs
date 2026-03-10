@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Interop.Desktop;
 
 public sealed class DesktopIconService
 {

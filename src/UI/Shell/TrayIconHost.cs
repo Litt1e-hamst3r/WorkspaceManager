@@ -1,8 +1,10 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
+using WorkspaceManager.App;
+using WorkspaceManager.Interop.Desktop;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.UI.Shell;
 
 public sealed class TrayIconHost : IDisposable
 {

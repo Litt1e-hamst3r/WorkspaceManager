@@ -1,6 +1,6 @@
-namespace WorkspaceManager.App.ViewModels;
+namespace WorkspaceManager.UI.ViewModels;
 
-public sealed class ModeOptionViewModel
+public sealed class ModeLayoutOptionViewModel
 {
     public string Id { get; set; } = string.Empty;
 

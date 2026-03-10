@@ -1,7 +1,8 @@
 using System.IO;
 using System.Text.Json;
+using WorkspaceManager.Domain.Layouts;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Infrastructure.Layouts;
 
 public sealed class DesktopLayoutStore
 {

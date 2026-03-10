@@ -1,3 +1,15 @@
+using WorkspaceManager.Application.Layouts;
+using WorkspaceManager.Application.Modes;
+using WorkspaceManager.Infrastructure.Configuration;
+using WorkspaceManager.Infrastructure.Layouts;
+using WorkspaceManager.Infrastructure.Modes;
+using WorkspaceManager.Interop.Desktop;
+using WorkspaceManager.Interop.Hotkeys;
+using WorkspaceManager.Interop.Layouts;
+using WorkspaceManager.Interop.Startup;
+using WorkspaceManager.UI.Services;
+using WorkspaceManager.UI.Shell;
+
 namespace WorkspaceManager.App;
 
 public partial class App : System.Windows.Application
@@ -25,9 +37,11 @@ public partial class App : System.Windows.Application
         _startupRegistrationService = new StartupRegistrationService();
         _desktopLayoutStore = new DesktopLayoutStore();
         _desktopLayoutPreviewService = new DesktopLayoutPreviewService();
+        var desktopLayoutInteropService = new DesktopLayoutInteropService();
+        var mainWindowViewDataBuilder = new MainWindowViewDataBuilder(new LayoutPreviewImageLoader());
         _modeStore = new ModeStore();
         _taskbarService = new TaskbarService();
-        _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService);
+        _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService, desktopLayoutInteropService);
         _modeService = new ModeService(_modeStore, DesktopIconService, _taskbarService, _desktopLayoutService);
         _settings = _settingsStore.Load();
         _settings.LaunchAtStartup = _startupRegistrationService.IsEnabled();
@@ -55,7 +69,8 @@ public partial class App : System.Windows.Application
             _modeService,
             _settings,
             _settingsStore,
-            _startupRegistrationService);
+            _startupRegistrationService,
+            mainWindowViewDataBuilder);
         MainWindow = mainWindow;
 
         _desktopToggleHotkeyService = new GlobalHotkeyService(_settings.DesktopToggleHotkey);

@@ -1,4 +1,4 @@
-namespace WorkspaceManager.App.ViewModels;
+namespace WorkspaceManager.UI.ViewModels;
 
 public sealed class DesktopModeViewModel
 {

@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace WorkspaceManager.App.ViewModels;
+namespace WorkspaceManager.UI.ViewModels;
 
 public sealed class LayoutSummaryViewModel
 {

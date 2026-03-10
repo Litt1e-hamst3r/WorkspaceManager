@@ -2,8 +2,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using WorkspaceManager.Infrastructure.Configuration;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Interop.Hotkeys;
 
 public sealed class GlobalHotkeyService : IDisposable
 {

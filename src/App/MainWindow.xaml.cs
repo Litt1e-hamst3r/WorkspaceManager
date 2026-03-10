@@ -1,7 +1,13 @@
-using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using WorkspaceManager.App.ViewModels;
+using WorkspaceManager.Application.Layouts;
+using WorkspaceManager.Application.Modes;
+using WorkspaceManager.Domain.Layouts;
+using WorkspaceManager.Domain.Modes;
+using WorkspaceManager.Infrastructure.Configuration;
+using WorkspaceManager.Interop.Desktop;
+using WorkspaceManager.Interop.Hotkeys;
+using WorkspaceManager.Interop.Startup;
+using WorkspaceManager.UI.Services;
+using WorkspaceManager.UI.ViewModels;
 
 namespace WorkspaceManager.App;
 
@@ -14,6 +20,7 @@ public partial class MainWindow : System.Windows.Window
     private readonly DesktopIconService _desktopIconService;
     private readonly TaskbarService _taskbarService;
     private readonly StartupRegistrationService _startupRegistrationService;
+    private readonly MainWindowViewDataBuilder _viewDataBuilder;
     private readonly MainWindowViewModel _viewModel;
     private GlobalHotkeyService? _desktopToggleHotkeyService;
     private GlobalHotkeyService? _showMainWindowHotkeyService;
@@ -27,7 +34,8 @@ public partial class MainWindow : System.Windows.Window
         ModeService modeService,
         AppSettings appSettings,
         AppSettingsStore settingsStore,
-        StartupRegistrationService startupRegistrationService)
+        StartupRegistrationService startupRegistrationService,
+        MainWindowViewDataBuilder viewDataBuilder)
     {
         InitializeComponent();
         _appSettings = appSettings;
@@ -37,6 +45,7 @@ public partial class MainWindow : System.Windows.Window
         _desktopIconService = desktopIconService;
         _taskbarService = taskbarService;
         _startupRegistrationService = startupRegistrationService;
+        _viewDataBuilder = viewDataBuilder;
         _viewModel = new MainWindowViewModel();
         DataContext = _viewModel;
 
@@ -263,7 +272,7 @@ public partial class MainWindow : System.Windows.Window
             _viewModel.SetDesktopToggleHotkeyInput(normalizedDesktopToggleHotkey);
             _viewModel.SetShowMainWindowHotkeyInput(normalizedShowMainWindowHotkey);
             _viewModel.SetHotkeys(normalizedDesktopToggleHotkey, normalizedShowMainWindowHotkey);
-            _viewModel.SetDefaultModeName(FindModeName(_appSettings.DefaultModeId));
+            _viewModel.SetDefaultModeName(_viewDataBuilder.FindModeName(_modeService.GetModes(), _appSettings.DefaultModeId));
             LoadModesIntoView();
 
             _viewModel.SetStatus("设置已保存。");
@@ -730,85 +739,44 @@ public partial class MainWindow : System.Windows.Window
 
     private void LoadSettingsIntoView()
     {
-        _viewModel.SetLaunchAtStartup(_appSettings.LaunchAtStartup);
-        _viewModel.SetStartMinimizedToTray(_appSettings.StartMinimizedToTray);
-        _viewModel.SetMinimizeToTrayOnMinimize(_appSettings.MinimizeToTrayOnMinimize);
-        _viewModel.SetCloseToTrayOnClose(_appSettings.CloseToTrayOnClose);
-        _viewModel.SetDefaultModeId(string.IsNullOrWhiteSpace(_appSettings.DefaultModeId)
-            ? AppSettings.DefaultModeIdValue
-            : _appSettings.DefaultModeId);
-        _viewModel.SetDesktopToggleHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.DesktopToggleHotkey)
-            ? AppSettings.DefaultDesktopToggleHotkey
-            : _appSettings.DesktopToggleHotkey);
-        _viewModel.SetShowMainWindowHotkeyInput(string.IsNullOrWhiteSpace(_appSettings.ShowMainWindowHotkey)
-            ? AppSettings.DefaultShowMainWindowHotkey
-            : _appSettings.ShowMainWindowHotkey);
-        _viewModel.SetDefaultModeName(FindModeName(_viewModel.DefaultModeId));
+        var modes = _modeService.GetModes();
+        var defaultModeName = _viewDataBuilder.FindModeName(
+            modes,
+            string.IsNullOrWhiteSpace(_appSettings.DefaultModeId)
+                ? AppSettings.DefaultModeIdValue
+                : _appSettings.DefaultModeId);
+
+        _viewDataBuilder.ApplySettings(_viewModel, _appSettings, defaultModeName);
     }
 
     private void LoadLayoutsIntoView()
     {
-        var layouts = _desktopLayoutService
-            .GetSavedLayouts()
-            .Select(layout =>
-            {
-                var previewImagePath = _desktopLayoutService.GetPreviewPath(layout) ?? string.Empty;
-                return new LayoutSummaryViewModel
-                {
-                    Id = layout.Id,
-                    Name = layout.Name,
-                    PreviewImagePath = previewImagePath,
-                    ThumbnailImage = LoadPreviewImage(previewImagePath, 320),
-                    PreviewImage = LoadPreviewImage(previewImagePath, 960),
-                    ItemCount = layout.Items.Count,
-                    DisplayText = BuildLayoutDisplayText(layout)
-                };
-            });
-
-        _viewModel.SetLayouts(layouts);
-        _viewModel.SetModeLayoutOptions(BuildModeLayoutOptions());
+        var layouts = _desktopLayoutService.GetSavedLayouts();
+        _viewModel.SetLayouts(_viewDataBuilder.BuildLayouts(layouts, _desktopLayoutService.GetPreviewPath));
+        _viewModel.SetModeLayoutOptions(_viewDataBuilder.BuildModeLayoutOptions(layouts));
         if (_viewModel.SelectedMode is not null)
         {
             _viewModel.SetSelectedModeLayoutId(_viewModel.SelectedMode.LayoutId);
         }
-        LoadModesIntoView(_viewModel.SelectedMode?.Id);
+        LoadModesIntoView(_viewModel.SelectedMode?.Id, layouts);
     }
 
-    private void LoadModesIntoView(string? selectedModeId = null)
+    private void LoadModesIntoView(string? selectedModeId = null, IReadOnlyList<DesktopLayoutSnapshot>? layouts = null)
     {
-        var layoutsById = _desktopLayoutService
-            .GetSavedLayouts()
-            .ToDictionary(layout => layout.Id, layout => layout.Name, StringComparer.OrdinalIgnoreCase);
-
-        var modes = _modeService
-            .GetModes()
-            .Select(mode => new DesktopModeViewModel
-            {
-                Id = mode.Id,
-                Name = mode.Name,
-                Description = mode.Description,
-                DesktopIconsVisible = mode.DesktopIconsVisible,
-                TaskbarVisible = mode.TaskbarVisible,
-                LayoutId = mode.LayoutId,
-                LayoutName = ResolveLayoutName(mode.LayoutId, layoutsById),
-                StateSummary = BuildModeStateSummary(mode, layoutsById),
-                IsDefault = string.Equals(_appSettings.DefaultModeId, mode.Id, StringComparison.OrdinalIgnoreCase),
-                IsActive = string.Equals(_currentModeId, mode.Id, StringComparison.OrdinalIgnoreCase),
-                IsBuiltIn = mode.IsBuiltIn
-            });
-
-        _viewModel.SetModes(modes);
+        var savedLayouts = layouts ?? _desktopLayoutService.GetSavedLayouts();
+        var modes = _modeService.GetModes();
+        _viewModel.SetModes(_viewDataBuilder.BuildModes(modes, savedLayouts, _appSettings.DefaultModeId, _currentModeId));
         if (!string.IsNullOrWhiteSpace(selectedModeId))
         {
             _viewModel.SelectedMode = _viewModel.Modes.FirstOrDefault(mode => string.Equals(mode.Id, selectedModeId, StringComparison.OrdinalIgnoreCase))
                 ?? _viewModel.SelectedMode;
         }
 
-        _viewModel.SetModeLayoutOptions(BuildModeLayoutOptions());
-        _viewModel.SetModeOptions(BuildModeOptions());
+        _viewModel.SetModeLayoutOptions(_viewDataBuilder.BuildModeLayoutOptions(savedLayouts));
+        _viewModel.SetModeOptions(_viewDataBuilder.BuildModeOptions(modes));
         _viewModel.SetSelectedModeLayoutId(_viewModel.SelectedMode?.LayoutId);
-        _viewModel.SetCurrentMode(FindModeName(_currentModeId));
-        _viewModel.SetDefaultModeName(FindModeName(_appSettings.DefaultModeId));
+        _viewModel.SetCurrentMode(_viewDataBuilder.FindModeName(modes, _currentModeId));
+        _viewModel.SetDefaultModeName(_viewDataBuilder.FindModeName(modes, _appSettings.DefaultModeId));
     }
 
     private async Task SaveLayoutWithPreviewAsync(DesktopLayoutSnapshot snapshot)
@@ -839,46 +807,6 @@ public partial class MainWindow : System.Windows.Window
         }
     }
 
-    private static ImageSource? LoadPreviewImage(string previewImagePath, int? targetPixelWidth = null)
-    {
-        if (string.IsNullOrWhiteSpace(previewImagePath) || !File.Exists(previewImagePath))
-        {
-            return null;
-        }
-
-        var bytes = File.ReadAllBytes(previewImagePath);
-        using var stream = new MemoryStream(bytes);
-        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-        var frame = decoder.Frames.FirstOrDefault();
-        if (frame is null)
-        {
-            return null;
-        }
-
-        if (!targetPixelWidth.HasValue || frame.PixelWidth <= targetPixelWidth.Value)
-        {
-            frame.Freeze();
-            return frame;
-        }
-
-        var scale = targetPixelWidth.Value / (double)frame.PixelWidth;
-        var transformed = new TransformedBitmap(frame, new System.Windows.Media.ScaleTransform(scale, scale));
-        transformed.Freeze();
-        return transformed;
-    }
-
-    private static string BuildLayoutDisplayText(DesktopLayoutSnapshot layout)
-    {
-        var parts = new List<string>
-        {
-            layout.Name,
-            $"{layout.Items.Count} 个图标"
-        };
-
-        parts.Add(layout.CreatedAt.ToString("yyyy-MM-dd HH:mm"));
-        return string.Join(" · ", parts);
-    }
-
     private async Task ApplyModeAsync(string modeId, string statusFormat)
     {
         try
@@ -894,68 +822,6 @@ public partial class MainWindow : System.Windows.Window
         {
             _viewModel.SetStatus($"切换模式失败：{ex.Message}");
         }
-    }
-
-    private IEnumerable<ModeLayoutOptionViewModel> BuildModeLayoutOptions()
-    {
-        yield return new ModeLayoutOptionViewModel
-        {
-            Id = string.Empty,
-            Name = "不恢复布局"
-        };
-
-        foreach (var layout in _desktopLayoutService.GetSavedLayouts())
-        {
-            yield return new ModeLayoutOptionViewModel
-            {
-                Id = layout.Id,
-                Name = layout.Name
-            };
-        }
-    }
-
-    private IEnumerable<ModeOptionViewModel> BuildModeOptions()
-    {
-        foreach (var mode in _modeService.GetModes())
-        {
-            yield return new ModeOptionViewModel
-            {
-                Id = mode.Id,
-                Name = mode.Name
-            };
-        }
-    }
-
-    private string? FindModeName(string? modeId)
-    {
-        return _modeService
-            .GetModes()
-            .FirstOrDefault(mode => string.Equals(mode.Id, modeId, StringComparison.OrdinalIgnoreCase))
-            ?.Name;
-    }
-
-    private static string ResolveLayoutName(string? layoutId, IReadOnlyDictionary<string, string> layoutsById)
-    {
-        if (string.IsNullOrWhiteSpace(layoutId))
-        {
-            return "未绑定布局";
-        }
-
-        return layoutsById.TryGetValue(layoutId, out var name)
-            ? name
-            : "布局已丢失";
-    }
-
-    private static string BuildModeStateSummary(DesktopMode mode, IReadOnlyDictionary<string, string> layoutsById)
-    {
-        var parts = new List<string>
-        {
-            mode.DesktopIconsVisible ? "图标显示" : "图标隐藏",
-            mode.TaskbarVisible ? "任务栏显示" : "任务栏隐藏",
-            $"布局 {ResolveLayoutName(mode.LayoutId, layoutsById)}"
-        };
-
-        return string.Join(" · ", parts);
     }
 
     private void ApplyCapturedHotkey(string? target, string hotkey)
@@ -1001,7 +867,7 @@ public partial class MainWindow : System.Windows.Window
             return;
         }
 
-        var previewImage = LoadPreviewImage(layout.PreviewImagePath);
+        var previewImage = _viewDataBuilder.LoadPreviewImage(layout.PreviewImagePath);
         if (previewImage is null)
         {
             _viewModel.SetStatus("该布局暂无预览图，请重新保存一次。");

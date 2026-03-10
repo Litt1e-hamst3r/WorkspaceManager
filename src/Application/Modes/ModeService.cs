@@ -1,4 +1,9 @@
-namespace WorkspaceManager.App;
+using WorkspaceManager.Application.Layouts;
+using WorkspaceManager.Domain.Modes;
+using WorkspaceManager.Infrastructure.Modes;
+using WorkspaceManager.Interop.Desktop;
+
+namespace WorkspaceManager.Application.Modes;
 
 public sealed class ModeService
 {

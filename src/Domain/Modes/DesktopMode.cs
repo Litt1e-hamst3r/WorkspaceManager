@@ -1,4 +1,4 @@
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Domain.Modes;
 
 public sealed class DesktopMode
 {

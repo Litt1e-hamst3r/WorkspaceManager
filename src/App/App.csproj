@@ -8,5 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Application\Layouts\*.cs" />
+    <Compile Include="..\Application\Modes\*.cs" />
+    <Compile Include="..\Domain\Layouts\*.cs" />
+    <Compile Include="..\Domain\Modes\*.cs" />
+    <Compile Include="..\Infrastructure\Configuration\*.cs" />
+    <Compile Include="..\Infrastructure\Layouts\*.cs" />
+    <Compile Include="..\Infrastructure\Modes\*.cs" />
+    <Compile Include="..\Interop\Desktop\DesktopIconService.cs" />
+    <Compile Include="..\Interop\Desktop\TaskbarService.cs" />
+    <Compile Include="..\Interop\Hotkeys\GlobalHotkeyService.cs" />
+    <Compile Include="..\Interop\Layouts\DesktopLayoutInteropService.cs" />
+    <Compile Include="..\Interop\Layouts\DesktopLayoutPreviewService.cs" />
+    <Compile Include="..\Interop\Startup\StartupRegistrationService.cs" />
+    <Compile Include="..\UI\Shell\TrayIconHost.cs" />
+    <Compile Include="..\UI\Services\*.cs" />
+    <Compile Include="..\UI\ViewModels\*.cs" />
   </ItemGroup>
 </Project>

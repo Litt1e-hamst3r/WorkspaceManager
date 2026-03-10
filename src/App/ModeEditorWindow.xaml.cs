@@ -1,4 +1,4 @@
-using WorkspaceManager.App.ViewModels;
+using WorkspaceManager.UI.ViewModels;
 
 namespace WorkspaceManager.App;
 

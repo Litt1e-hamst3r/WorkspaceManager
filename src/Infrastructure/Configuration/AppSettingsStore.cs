@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace WorkspaceManager.App;
+namespace WorkspaceManager.Infrastructure.Configuration;
 
 public sealed class AppSettingsStore
 {
