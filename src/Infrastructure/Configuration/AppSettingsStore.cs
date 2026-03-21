@@ -26,23 +26,74 @@ public sealed class AppSettingsStore
     {
         if (!File.Exists(_settingsPath))
         {
-            return new AppSettings();
+            return Normalize(new AppSettings());
         }
 
         try
         {
             var json = File.ReadAllText(_settingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, SerializerOptions) ?? new AppSettings();
+            return Normalize(JsonSerializer.Deserialize<AppSettings>(json, SerializerOptions) ?? new AppSettings());
         }
         catch
         {
-            return new AppSettings();
+            return Normalize(new AppSettings());
         }
     }
 
     public void Save(AppSettings settings)
     {
-        var json = JsonSerializer.Serialize(settings, SerializerOptions);
+        var normalized = Normalize(settings);
+        var json = JsonSerializer.Serialize(normalized, SerializerOptions);
         File.WriteAllText(_settingsPath, json);
+    }
+
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        settings.DesktopToggleHotkey = string.IsNullOrWhiteSpace(settings.DesktopToggleHotkey)
+            ? AppSettings.DefaultDesktopToggleHotkey
+            : settings.DesktopToggleHotkey;
+        settings.ShowMainWindowHotkey = string.IsNullOrWhiteSpace(settings.ShowMainWindowHotkey)
+            ? AppSettings.DefaultShowMainWindowHotkey
+            : settings.ShowMainWindowHotkey;
+        settings.DefaultModeId = string.IsNullOrWhiteSpace(settings.DefaultModeId)
+            ? AppSettings.DefaultModeIdValue
+            : settings.DefaultModeId;
+        settings.WallpaperRotationIntervalMinutes = settings.WallpaperRotationIntervalMinutes is < 1 or > 1440
+            ? AppSettings.DefaultWallpaperRotationIntervalMinutes
+            : settings.WallpaperRotationIntervalMinutes;
+        settings.WallpaperSources = MergeWallpaperSources(settings.WallpaperSources);
+        return settings;
+    }
+
+    private static List<WallpaperSourceSetting> MergeWallpaperSources(List<WallpaperSourceSetting>? currentSources)
+    {
+        var defaults = AppSettings.CreateDefaultWallpaperSources();
+        if (currentSources is null || currentSources.Count == 0)
+        {
+            return defaults;
+        }
+
+        var currentById = currentSources
+            .Where(source => !string.IsNullOrWhiteSpace(source.Id))
+            .GroupBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Last(), StringComparer.OrdinalIgnoreCase);
+
+        return defaults
+            .Select(defaultSource =>
+            {
+                if (!currentById.TryGetValue(defaultSource.Id, out var savedSource))
+                {
+                    return defaultSource;
+                }
+
+                return new WallpaperSourceSetting
+                {
+                    Id = defaultSource.Id,
+                    Name = defaultSource.Name,
+                    RequestUrl = defaultSource.RequestUrl,
+                    Enabled = savedSource.Enabled
+                };
+            })
+            .ToList();
     }
 }

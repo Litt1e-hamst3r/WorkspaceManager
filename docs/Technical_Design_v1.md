@@ -55,6 +55,8 @@
 - `FileOrganizerService`
 - `FileWatchService`
 - `SettingsService`
+- `WallpaperRotationService`
+- `WallpaperAutoRotationService`
 - `StartupService`
 - `OperationLogService`
 
@@ -286,7 +288,7 @@ logs/
 ```
 
 ### 7.2 文件职责
-- `appsettings.json`：基础设置、自启动、托盘、默认模式、快捷键
+- `appsettings.json`：基础设置、自启动、托盘、默认模式、快捷键、随机壁纸源
 - `modes.json`：预设模式定义、布局绑定、图标/任务栏显隐配置
 - `rules.json`：整理规则定义
 - `layouts/*.json`：布局快照
@@ -306,6 +308,10 @@ logs/
 - `AutoOrganizeEnabled`
 - `DesktopToggleHotkey`
 - `ShowMainWindowHotkey`
+- `WallpaperChangeOnStartup`
+- `WallpaperAutoRotateEnabled`
+- `WallpaperRotationIntervalMinutes`
+- `WallpaperSources`
 - `LogLevel`
 
 ## 8.2 `HotkeyDefinition`
@@ -329,6 +335,7 @@ logs/
 - 将位置持久化为布局快照
 - 保存布局时短暂隐藏主窗口并截取桌面缩略图，用于列表预览
 - 恢复时按项目匹配并设置坐标
+- 监听显示模式切换，在分辨率切回原值后自动恢复临时布局，降低独占全屏游戏打乱图标的概率
 
 ## 9.3 任务栏控制
 - 通过 `Shell_TrayWnd` 与 `Shell_SecondaryTrayWnd` 控制任务栏显隐
@@ -340,6 +347,14 @@ logs/
 ## 9.5 开机自启
 - 优先通过当前用户启动项或注册表实现
 - 需避免重复注册与脏数据残留
+
+## 9.6 壁纸切换
+- 通过 HTTP 拉取随机图片接口，兼容重定向直链和 JSON 返回图片地址
+- 将图片缓存到本地后再调用 Windows 壁纸接口，避免直接依赖远端 URL
+- 使用后台预取缓存下一张壁纸，降低手动切换等待时间
+- 壁纸源配置跟随 `AppSettings` 持久化，允许禁用不稳定图源
+- `WallpaperAutoRotationService` 使用 `PeriodicTimer` 按分钟间隔触发轮换请求
+- 定时轮换始终基于已保存配置执行，避免 UI 中未保存的勾选项直接影响后台行为
 
 ## 10. 主要流程
 
@@ -443,3 +458,4 @@ logs/
 - 先把 Windows 集成能力封装在 `Interop` 层
 - 首版本只使用 `JSON` 进行本地存储
 - 优先做出稳定的托盘、布局、模式、整理四大核心模块
+

@@ -20,6 +20,11 @@ public sealed class MainWindowViewDataBuilder
         viewModel.SetStartMinimizedToTray(settings.StartMinimizedToTray);
         viewModel.SetMinimizeToTrayOnMinimize(settings.MinimizeToTrayOnMinimize);
         viewModel.SetCloseToTrayOnClose(settings.CloseToTrayOnClose);
+        viewModel.SetWallpaperChangeOnStartup(settings.WallpaperChangeOnStartup);
+        viewModel.SetWallpaperAutoRotateEnabled(settings.WallpaperAutoRotateEnabled);
+        viewModel.SetWallpaperRotationIntervalMinutesInput(settings.WallpaperRotationIntervalMinutes.ToString());
+        viewModel.SetWallpaperScheduleText(BuildWallpaperScheduleText(settings));
+        viewModel.SetWallpaperSources(BuildWallpaperSources(settings.WallpaperSources));
         viewModel.SetDefaultModeId(string.IsNullOrWhiteSpace(settings.DefaultModeId)
             ? AppSettings.DefaultModeIdValue
             : settings.DefaultModeId);
@@ -30,6 +35,19 @@ public sealed class MainWindowViewDataBuilder
             ? AppSettings.DefaultShowMainWindowHotkey
             : settings.ShowMainWindowHotkey);
         viewModel.SetDefaultModeName(defaultModeName);
+    }
+
+    public IReadOnlyList<WallpaperSourceViewModel> BuildWallpaperSources(IEnumerable<WallpaperSourceSetting> sources)
+    {
+        return sources
+            .Select(source => new WallpaperSourceViewModel
+            {
+                Id = source.Id,
+                Name = source.Name,
+                RequestUrl = source.RequestUrl,
+                Enabled = source.Enabled
+            })
+            .ToList();
     }
 
     public IReadOnlyList<LayoutSummaryViewModel> BuildLayouts(
@@ -121,6 +139,21 @@ public sealed class MainWindowViewDataBuilder
     public System.Windows.Media.ImageSource? LoadPreviewImage(string previewImagePath)
     {
         return _layoutPreviewImageLoader.Load(previewImagePath);
+    }
+
+    private static string BuildWallpaperScheduleText(AppSettings settings)
+    {
+        if (!settings.WallpaperAutoRotateEnabled)
+        {
+            return "定时轮换：未开启";
+        }
+
+        if (settings.WallpaperSources.All(source => !source.Enabled))
+        {
+            return "定时轮换：未启动，请先启用至少一个图源";
+        }
+
+        return $"定时轮换：每 {settings.WallpaperRotationIntervalMinutes} 分钟自动切换";
     }
 
     private static string BuildLayoutDisplayText(DesktopLayoutSnapshot layout)

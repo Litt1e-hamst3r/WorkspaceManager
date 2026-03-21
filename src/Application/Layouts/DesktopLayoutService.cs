@@ -54,6 +54,11 @@ public sealed class DesktopLayoutService
         var snapshot = _layoutStore.Load(id)
             ?? throw new InvalidOperationException("未找到指定布局。");
 
+        Restore(snapshot);
+    }
+
+    public void Restore(DesktopLayoutSnapshot snapshot)
+    {
         _layoutInteropService.RestoreItems(snapshot.Items);
     }
 

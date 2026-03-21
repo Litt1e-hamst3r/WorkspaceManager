@@ -1,5 +1,7 @@
+using System.Globalization;
 using WorkspaceManager.Application.Layouts;
 using WorkspaceManager.Application.Modes;
+using WorkspaceManager.Application.Wallpapers;
 using WorkspaceManager.Domain.Layouts;
 using WorkspaceManager.Domain.Modes;
 using WorkspaceManager.Infrastructure.Configuration;
@@ -16,6 +18,8 @@ public partial class MainWindow : System.Windows.Window
     private readonly AppSettings _appSettings;
     private readonly DesktopLayoutService _desktopLayoutService;
     private readonly ModeService _modeService;
+    private readonly WallpaperRotationService _wallpaperRotationService;
+    private readonly WallpaperAutoRotationService _wallpaperAutoRotationService;
     private readonly AppSettingsStore _settingsStore;
     private readonly DesktopIconService _desktopIconService;
     private readonly TaskbarService _taskbarService;
@@ -26,12 +30,15 @@ public partial class MainWindow : System.Windows.Window
     private GlobalHotkeyService? _showMainWindowHotkeyService;
     private string? _currentModeId;
     private bool _allowClose;
+    private bool _isWallpaperChangeInProgress;
 
     public MainWindow(
         DesktopIconService desktopIconService,
         TaskbarService taskbarService,
         DesktopLayoutService desktopLayoutService,
         ModeService modeService,
+        WallpaperRotationService wallpaperRotationService,
+        WallpaperAutoRotationService wallpaperAutoRotationService,
         AppSettings appSettings,
         AppSettingsStore settingsStore,
         StartupRegistrationService startupRegistrationService,
@@ -41,6 +48,8 @@ public partial class MainWindow : System.Windows.Window
         _appSettings = appSettings;
         _desktopLayoutService = desktopLayoutService;
         _modeService = modeService;
+        _wallpaperRotationService = wallpaperRotationService;
+        _wallpaperAutoRotationService = wallpaperAutoRotationService;
         _settingsStore = settingsStore;
         _desktopIconService = desktopIconService;
         _taskbarService = taskbarService;
@@ -51,10 +60,13 @@ public partial class MainWindow : System.Windows.Window
 
         StateChanged += OnStateChanged;
         Closing += OnClosing;
+        _wallpaperAutoRotationService.RotationRequested += OnWallpaperAutoRotationRequestedAsync;
 
         LoadSettingsIntoView();
         LoadLayoutsIntoView();
         LoadModesIntoView();
+        PrimeWallpaperCache();
+        ApplyWallpaperAutoRotationSchedule();
     }
 
     public void AttachHotkeyServices(
@@ -137,6 +149,43 @@ public partial class MainWindow : System.Windows.Window
         {
             _viewModel.SetStatus($"应用默认模式失败：{ex.Message}");
         }
+    }
+
+    public void ScheduleStartupWallpaperRefresh()
+    {
+        if (!_appSettings.WallpaperChangeOnStartup)
+        {
+            return;
+        }
+
+        _ = Dispatcher.InvokeAsync(async () => await ChangeWallpaperAsync(true));
+    }
+
+    public void PrimeWallpaperCache()
+    {
+        _wallpaperRotationService.WarmUp(BuildWallpaperSourcesFromSettings());
+    }
+
+    public void ApplyWallpaperAutoRotationSchedule()
+    {
+        if (!_appSettings.WallpaperAutoRotateEnabled)
+        {
+            _wallpaperAutoRotationService.Configure(false, TimeSpan.Zero);
+            _viewModel.SetWallpaperScheduleText("定时轮换：未开启");
+            return;
+        }
+
+        var sources = BuildWallpaperSourcesFromSettings();
+        if (!HasEnabledWallpaperSource(sources))
+        {
+            _wallpaperAutoRotationService.Configure(false, TimeSpan.Zero);
+            _viewModel.SetWallpaperScheduleText("定时轮换：未启动，请先启用至少一个图源");
+            return;
+        }
+
+        var interval = TimeSpan.FromMinutes(_appSettings.WallpaperRotationIntervalMinutes);
+        _wallpaperAutoRotationService.Configure(true, interval);
+        _viewModel.SetWallpaperScheduleText($"定时轮换：每 {_appSettings.WallpaperRotationIntervalMinutes} 分钟自动切换");
     }
 
     private async Task ToggleDesktopIconsAsync()
@@ -223,6 +272,203 @@ public partial class MainWindow : System.Windows.Window
     private async void HideTaskbar_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         await SetTaskbarVisibleAsync(false);
+    }
+
+    private async void ChangeWallpaperNow_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        await ChangeWallpaperAsync(false);
+    }
+
+    private void EnableAllWallpaperSources_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        foreach (var source in _viewModel.WallpaperSources)
+        {
+            source.Enabled = true;
+        }
+
+        _viewModel.SetStatus("已启用全部壁纸源，记得保存设置。");
+    }
+
+    private async Task ChangeWallpaperAsync(bool isStartup, bool isScheduled = false)
+    {
+        if (_isWallpaperChangeInProgress)
+        {
+            if (!isStartup && !isScheduled)
+            {
+                _viewModel.SetStatus("壁纸切换进行中。");
+            }
+
+            return;
+        }
+
+        _isWallpaperChangeInProgress = true;
+        _viewModel.SetWallpaperChangeInProgress(true);
+        _viewModel.SetStatus(isStartup
+            ? "正在为启动流程切换桌面壁纸..."
+            : isScheduled
+                ? "已到轮换时间，正在切换桌面壁纸..."
+                : "正在切换桌面壁纸...");
+        try
+        {
+            var wallpaperSources = isStartup || isScheduled
+                ? BuildWallpaperSourcesFromSettings()
+                : BuildWallpaperSourcesFromView();
+            if (!HasEnabledWallpaperSource(wallpaperSources))
+            {
+                throw new InvalidOperationException("请先启用至少一个壁纸源。");
+            }
+
+            var result = await _wallpaperRotationService.ApplyRandomAsync(wallpaperSources);
+            _viewModel.SetStatus(isStartup
+                ? $"启动时已使用“{result.SourceName}”切换桌面壁纸。"
+                : isScheduled
+                    ? $"已按定时轮换使用“{result.SourceName}”切换桌面壁纸。"
+                    : $"已使用“{result.SourceName}”切换桌面壁纸。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus(isStartup
+                ? $"启动时切换壁纸失败：{ex.Message}"
+                : isScheduled
+                    ? $"定时轮换壁纸失败：{ex.Message}"
+                    : $"切换桌面壁纸失败：{ex.Message}");
+        }
+        finally
+        {
+            _isWallpaperChangeInProgress = false;
+            _viewModel.SetWallpaperChangeInProgress(false);
+            ApplyWallpaperAutoRotationSchedule();
+        }
+    }
+
+    private List<WallpaperSourceSetting> BuildWallpaperSourcesFromView()
+    {
+        return _viewModel.WallpaperSources
+            .Select(source => new WallpaperSourceSetting
+            {
+                Id = source.Id,
+                Name = source.Name,
+                RequestUrl = source.RequestUrl,
+                Enabled = source.Enabled
+            })
+            .ToList();
+    }
+
+    private List<WallpaperSourceSetting> BuildWallpaperSourcesFromSettings()
+    {
+        return _appSettings.WallpaperSources
+            .Select(source => new WallpaperSourceSetting
+            {
+                Id = source.Id,
+                Name = source.Name,
+                RequestUrl = source.RequestUrl,
+                Enabled = source.Enabled
+            })
+            .ToList();
+    }
+
+    private async Task OnWallpaperAutoRotationRequestedAsync()
+    {
+        var operation = Dispatcher.InvokeAsync(() => ChangeWallpaperAsync(false, true));
+        await operation.Task.Unwrap();
+    }
+
+    private static int ParseWallpaperRotationIntervalMinutes(string? value)
+    {
+        if (!TryParseWallpaperRotationIntervalMinutes(value, out var minutes))
+        {
+            throw new InvalidOperationException("轮换间隔必须是 1 到 1440 之间的整数分钟。");
+        }
+
+        return minutes;
+    }
+
+    private static bool TryParseWallpaperRotationIntervalMinutes(string? value, out int minutes)
+    {
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out minutes))
+        {
+            return false;
+        }
+
+        return minutes is >= 1 and <= 1440;
+    }
+
+    private static int ResolveWallpaperRotationIntervalMinutesForSave(string? value, int fallback, bool autoRotateEnabled)
+    {
+        if (autoRotateEnabled)
+        {
+            return ParseWallpaperRotationIntervalMinutes(value);
+        }
+
+        return TryParseWallpaperRotationIntervalMinutes(value, out var minutes)
+            ? minutes
+            : NormalizeWallpaperRotationIntervalMinutes(fallback);
+    }
+
+    private static int NormalizeWallpaperRotationIntervalMinutes(int minutes)
+    {
+        return minutes is >= 1 and <= 1440
+            ? minutes
+            : AppSettings.DefaultWallpaperRotationIntervalMinutes;
+    }
+
+    private static bool HasEnabledWallpaperSource(IReadOnlyCollection<WallpaperSourceSetting> sources)
+    {
+        return sources.Any(source => source.Enabled);
+    }
+
+    private void SaveWallpaperSettings_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var wallpaperSources = BuildWallpaperSourcesFromView();
+            var rotationMinutes = ResolveWallpaperRotationIntervalMinutesForSave(
+                _viewModel.WallpaperRotationIntervalMinutesInput,
+                _appSettings.WallpaperRotationIntervalMinutes,
+                _viewModel.WallpaperAutoRotateEnabled);
+            if ((_viewModel.WallpaperChangeOnStartupEnabled || _viewModel.WallpaperAutoRotateEnabled) && !HasEnabledWallpaperSource(wallpaperSources))
+            {
+                throw new InvalidOperationException("启用壁纸自动功能时，至少需要一个可用图源。");
+            }
+
+            _appSettings.WallpaperChangeOnStartup = _viewModel.WallpaperChangeOnStartupEnabled;
+            _appSettings.WallpaperAutoRotateEnabled = _viewModel.WallpaperAutoRotateEnabled;
+            _appSettings.WallpaperRotationIntervalMinutes = rotationMinutes;
+            _appSettings.WallpaperSources = wallpaperSources;
+            _settingsStore.Save(_appSettings);
+            _viewModel.SetWallpaperRotationIntervalMinutesInput(_appSettings.WallpaperRotationIntervalMinutes.ToString(CultureInfo.InvariantCulture));
+            PrimeWallpaperCache();
+            ApplyWallpaperAutoRotationSchedule();
+            _viewModel.SetStatus(_appSettings.WallpaperAutoRotateEnabled
+                ? $"壁纸设置已保存，已开启每 {_appSettings.WallpaperRotationIntervalMinutes} 分钟轮换。"
+                : "壁纸设置已保存。下次切换会优先使用预取缓存。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"保存壁纸设置失败：{ex.Message}");
+        }
+    }
+
+    private void ReloadWallpaperSettings_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var latest = _settingsStore.Load();
+        _appSettings.WallpaperChangeOnStartup = latest.WallpaperChangeOnStartup;
+        _appSettings.WallpaperAutoRotateEnabled = latest.WallpaperAutoRotateEnabled;
+        _appSettings.WallpaperRotationIntervalMinutes = latest.WallpaperRotationIntervalMinutes;
+        _appSettings.WallpaperSources = latest.WallpaperSources
+            .Select(source => new WallpaperSourceSetting
+            {
+                Id = source.Id,
+                Name = source.Name,
+                RequestUrl = source.RequestUrl,
+                Enabled = source.Enabled
+            })
+            .ToList();
+
+        LoadSettingsIntoView();
+        PrimeWallpaperCache();
+        ApplyWallpaperAutoRotationSchedule();
+        _viewModel.SetStatus("壁纸设置已重新加载。");
     }
 
     private void SaveSettings_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -530,6 +776,18 @@ public partial class MainWindow : System.Windows.Window
         _appSettings.StartMinimizedToTray = latest.StartMinimizedToTray;
         _appSettings.MinimizeToTrayOnMinimize = latest.MinimizeToTrayOnMinimize;
         _appSettings.CloseToTrayOnClose = latest.CloseToTrayOnClose;
+        _appSettings.WallpaperChangeOnStartup = latest.WallpaperChangeOnStartup;
+        _appSettings.WallpaperAutoRotateEnabled = latest.WallpaperAutoRotateEnabled;
+        _appSettings.WallpaperRotationIntervalMinutes = latest.WallpaperRotationIntervalMinutes;
+        _appSettings.WallpaperSources = latest.WallpaperSources
+            .Select(source => new WallpaperSourceSetting
+            {
+                Id = source.Id,
+                Name = source.Name,
+                RequestUrl = source.RequestUrl,
+                Enabled = source.Enabled
+            })
+            .ToList();
         _appSettings.DesktopToggleHotkey = string.IsNullOrWhiteSpace(latest.DesktopToggleHotkey)
             ? AppSettings.DefaultDesktopToggleHotkey
             : latest.DesktopToggleHotkey;
@@ -579,6 +837,8 @@ public partial class MainWindow : System.Windows.Window
         }
 
         LoadSettingsIntoView();
+        PrimeWallpaperCache();
+        ApplyWallpaperAutoRotationSchedule();
         _viewModel.SetHotkeys(_appSettings.DesktopToggleHotkey, _appSettings.ShowMainWindowHotkey);
         LoadModesIntoView();
         _viewModel.SetStatus("设置已重新加载。");
@@ -698,6 +958,8 @@ public partial class MainWindow : System.Windows.Window
         {
             _showMainWindowHotkeyService.HotkeyPressed -= OnShowMainWindowHotkeyPressed;
         }
+
+        _wallpaperAutoRotationService.RotationRequested -= OnWallpaperAutoRotationRequestedAsync;
     }
 
     private async void OnDesktopToggleHotkeyPressed(object? sender, EventArgs e)

@@ -10,12 +10,16 @@
   <ItemGroup>
     <Compile Include="..\Application\Layouts\*.cs" />
     <Compile Include="..\Application\Modes\*.cs" />
+    <Compile Include="..\Application\Wallpapers\*.cs" />
     <Compile Include="..\Domain\Layouts\*.cs" />
     <Compile Include="..\Domain\Modes\*.cs" />
     <Compile Include="..\Infrastructure\Configuration\*.cs" />
     <Compile Include="..\Infrastructure\Layouts\*.cs" />
     <Compile Include="..\Infrastructure\Modes\*.cs" />
+    <Compile Include="..\Infrastructure\Wallpapers\*.cs" />
     <Compile Include="..\Interop\Desktop\DesktopIconService.cs" />
+    <Compile Include="..\Interop\Desktop\DesktopWallpaperService.cs" />
+    <Compile Include="..\Interop\Desktop\DisplaySettingsWatcher.cs" />
     <Compile Include="..\Interop\Desktop\TaskbarService.cs" />
     <Compile Include="..\Interop\Hotkeys\GlobalHotkeyService.cs" />
     <Compile Include="..\Interop\Layouts\DesktopLayoutInteropService.cs" />

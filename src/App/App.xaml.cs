@@ -1,8 +1,11 @@
+using System.Net.Http;
 using WorkspaceManager.Application.Layouts;
 using WorkspaceManager.Application.Modes;
+using WorkspaceManager.Application.Wallpapers;
 using WorkspaceManager.Infrastructure.Configuration;
 using WorkspaceManager.Infrastructure.Layouts;
 using WorkspaceManager.Infrastructure.Modes;
+using WorkspaceManager.Infrastructure.Wallpapers;
 using WorkspaceManager.Interop.Desktop;
 using WorkspaceManager.Interop.Hotkeys;
 using WorkspaceManager.Interop.Layouts;
@@ -23,9 +26,13 @@ public partial class App : System.Windows.Application
     private AppSettingsStore? _settingsStore;
     private GlobalHotkeyService? _desktopToggleHotkeyService;
     private GlobalHotkeyService? _showMainWindowHotkeyService;
+    private DisplaySettingsWatcher? _displaySettingsWatcher;
+    private DesktopLayoutProtectionService? _desktopLayoutProtectionService;
     private StartupRegistrationService? _startupRegistrationService;
     private TaskbarService? _taskbarService;
     private TrayIconHost? _trayIconHost;
+    private WallpaperAutoRotationService? _wallpaperAutoRotationService;
+    private HttpClient? _httpClient;
 
     public DesktopIconService DesktopIconService { get; } = new();
 
@@ -38,10 +45,25 @@ public partial class App : System.Windows.Application
         _desktopLayoutStore = new DesktopLayoutStore();
         _desktopLayoutPreviewService = new DesktopLayoutPreviewService();
         var desktopLayoutInteropService = new DesktopLayoutInteropService();
+        _displaySettingsWatcher = new DisplaySettingsWatcher();
+        _httpClient = new HttpClient(new HttpClientHandler
+        {
+            AllowAutoRedirect = true
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(8)
+        };
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("WorkspaceManager/0.1");
+        var wallpaperRotationService = new WallpaperRotationService(
+            _httpClient,
+            new WallpaperImageStore(),
+            new DesktopWallpaperService());
+        _wallpaperAutoRotationService = new WallpaperAutoRotationService();
         var mainWindowViewDataBuilder = new MainWindowViewDataBuilder(new LayoutPreviewImageLoader());
         _modeStore = new ModeStore();
         _taskbarService = new TaskbarService();
         _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService, desktopLayoutInteropService);
+        _desktopLayoutProtectionService = new DesktopLayoutProtectionService(_desktopLayoutService, _displaySettingsWatcher, Dispatcher);
         _modeService = new ModeService(_modeStore, DesktopIconService, _taskbarService, _desktopLayoutService);
         _settings = _settingsStore.Load();
         _settings.LaunchAtStartup = _startupRegistrationService.IsEnabled();
@@ -67,6 +89,8 @@ public partial class App : System.Windows.Application
             _taskbarService,
             _desktopLayoutService,
             _modeService,
+            wallpaperRotationService,
+            _wallpaperAutoRotationService,
             _settings,
             _settingsStore,
             _startupRegistrationService,
@@ -79,8 +103,11 @@ public partial class App : System.Windows.Application
 
         _trayIconHost = new TrayIconHost(mainWindow, DesktopIconService, _taskbarService);
         _trayIconHost.Initialize();
+        _desktopLayoutProtectionService.Start();
 
+        mainWindow.PrimeWallpaperCache();
         mainWindow.ApplyConfiguredDefaultMode();
+        mainWindow.ScheduleStartupWallpaperRefresh();
 
         if (_settings.StartMinimizedToTray)
         {
@@ -98,7 +125,10 @@ public partial class App : System.Windows.Application
     {
         _desktopToggleHotkeyService?.Dispose();
         _showMainWindowHotkeyService?.Dispose();
+        _desktopLayoutProtectionService?.Dispose();
+        _wallpaperAutoRotationService?.Dispose();
         _trayIconHost?.Dispose();
+        _httpClient?.Dispose();
         base.OnExit(e);
     }
 }

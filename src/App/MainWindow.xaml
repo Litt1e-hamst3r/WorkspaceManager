@@ -11,6 +11,7 @@
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -67,7 +68,19 @@
             </Border>
         </Grid>
 
-        <TabControl Grid.Row="1" Margin="0,20,0,0">
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Padding="14,12"
+                Background="{StaticResource SurfaceAltBrush}"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="14">
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="{StaticResource StrongTextBrush}"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <TabControl Grid.Row="2" Margin="0,20,0,0">
             <TabItem Header="概览">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
@@ -883,6 +896,154 @@
                     </Grid>
                 </ScrollViewer>
             </TabItem>
+            <TabItem Header="壁纸">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="True"
+                              PanningMode="VerticalOnly">
+                    <Grid Margin="4,18,4,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2.4*" />
+                            <ColumnDefinition Width="1.6*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="随机壁纸" FontSize="20" FontWeight="SemiBold" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="从启用的图源里拉取随机图片，并在后台预取下一张，减少下一次点击等待。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="启动时自动切换壁纸"
+                                          IsChecked="{Binding WallpaperChangeOnStartupEnabled}" />
+                                <TextBlock Margin="24,6,0,0"
+                                           Text="应用启动完成后会自动尝试换一张，保存后生效。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="定时轮换壁纸"
+                                          IsChecked="{Binding WallpaperAutoRotateEnabled}" />
+                                <Grid Margin="24,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock VerticalAlignment="Center"
+                                               Text="轮换间隔（分钟）"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBox Grid.Column="1"
+                                             Height="36"
+                                             Margin="12,0,0,0"
+                                             VerticalContentAlignment="Center"
+                                             IsEnabled="{Binding WallpaperAutoRotateEnabled}"
+                                             Text="{Binding WallpaperRotationIntervalMinutesInput, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <TextBlock Margin="24,8,0,0"
+                                           Text="{Binding WallpaperScheduleText}"
+                                           Foreground="{StaticResource StrongTextBrush}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="24,6,0,0"
+                                           Text="定时轮换基于已保存配置在后台执行，不会被编辑中的未保存勾选项直接影响。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,18,0,0" Text="壁纸源" FontWeight="SemiBold" />
+                                <Border Margin="0,10,0,0"
+                                        Padding="12"
+                                        MaxHeight="320"
+                                        Background="{StaticResource SurfaceAltBrush}"
+                                        BorderBrush="{StaticResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="14">
+                                    <ListBox ItemsSource="{Binding WallpaperSources}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type viewModels:WallpaperSourceViewModel}">
+                                                <Border Padding="0,8">
+                                                    <StackPanel>
+                                                        <CheckBox Content="{Binding Name}"
+                                                                  FontWeight="SemiBold"
+                                                                  IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <TextBlock Margin="24,4,0,0"
+                                                                   Text="{Binding RequestUrl}"
+                                                                   FontSize="12"
+                                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                                   TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
+                                <WrapPanel Margin="0,18,0,0">
+                                    <Button Width="120" Height="42" Content="立即切换" Click="ChangeWallpaperNow_Click">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsWallpaperChangeInProgress}" Value="True">
+                                                        <Setter Property="Content" Value="切换中..." />
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Button Width="132"
+                                            Height="42"
+                                            Margin="12,0,0,0"
+                                            Content="保存壁纸设置"
+                                            Click="SaveWallpaperSettings_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Width="132"
+                                            Height="42"
+                                            Margin="12,0,0,0"
+                                            Content="重新加载"
+                                            Click="ReloadWallpaperSettings_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Width="120"
+                                            Height="42"
+                                            Margin="12,0,0,0"
+                                            Content="全部启用"
+                                            Click="EnableAllWallpaperSources_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="响应优化" FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="当前会优先使用后台预取缓存，下一次手动切换通常会更快。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <Border Margin="0,18,0,0"
+                                        Padding="16"
+                                        Background="{StaticResource SurfaceAltBrush}"
+                                        CornerRadius="14">
+                                    <StackPanel>
+                                        <TextBlock Text="当前策略" FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,10,0,0" Text="• 图源按优先级尝试，不再随机走慢源" />
+                                        <TextBlock Margin="0,8,0,0" Text="• 切换成功后后台预取下一张" />
+                                        <TextBlock Margin="0,8,0,0" Text="• 网络超时已缩短，失败源更快跳过" />
+                                        <TextBlock Margin="0,8,0,0" Text="• 图片先缓存到本机，再交给系统设置壁纸" />
+                                        <TextBlock Margin="0,8,0,0" Text="• 支持保存后按分钟间隔自动轮换壁纸" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
 
             <TabItem Header="设置">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -890,113 +1051,113 @@
                               CanContentScroll="True"
                               PanningMode="VerticalOnly">
                     <Grid Margin="4,18,4,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
-                        <StackPanel>
-                            <TextBlock Text="启动行为" FontSize="18" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,8,0,0" Text="控制应用何时启动、是否直接进入托盘。" Foreground="{StaticResource MutedTextBrush}" />
+                        <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="启动行为" FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Margin="0,8,0,0" Text="控制应用何时启动、是否直接进入托盘。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <CheckBox Margin="0,18,0,0"
-                                      Content="开机自启"
-                                      IsChecked="{Binding LaunchAtStartupEnabled}" />
-                            <TextBlock Margin="24,6,0,0" Text="当前用户登录 Windows 后自动启动应用。" Foreground="{StaticResource MutedTextBrush}" />
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="开机自启"
+                                          IsChecked="{Binding LaunchAtStartupEnabled}" />
+                                <TextBlock Margin="24,6,0,0" Text="当前用户登录 Windows 后自动启动应用。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <CheckBox Margin="0,18,0,0"
-                                      Content="启动时最小化到托盘"
-                                      IsChecked="{Binding StartMinimizedToTrayEnabled}" />
-                            <TextBlock Margin="24,6,0,0" Text="启动后不弹出主窗口，直接在托盘后台运行。" Foreground="{StaticResource MutedTextBrush}" />
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="启动时最小化到托盘"
+                                          IsChecked="{Binding StartMinimizedToTrayEnabled}" />
+                                <TextBlock Margin="24,6,0,0" Text="启动后不弹出主窗口，直接在托盘后台运行。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <CheckBox Margin="0,18,0,0"
-                                      Content="最小化时隐藏到托盘"
-                                      IsChecked="{Binding MinimizeToTrayOnMinimizeEnabled}" />
-                            <TextBlock Margin="24,6,0,0" Text="点击最小化后不保留任务栏窗口，直接进入托盘。" Foreground="{StaticResource MutedTextBrush}" />
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="最小化时隐藏到托盘"
+                                          IsChecked="{Binding MinimizeToTrayOnMinimizeEnabled}" />
+                                <TextBlock Margin="24,6,0,0" Text="点击最小化后不保留任务栏窗口，直接进入托盘。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <CheckBox Margin="0,18,0,0"
-                                      Content="关闭窗口时隐藏到托盘"
-                                      IsChecked="{Binding CloseToTrayOnCloseEnabled}" />
-                            <TextBlock Margin="24,6,0,0" Text="点击右上角关闭按钮时不退出程序，而是隐藏到托盘。" Foreground="{StaticResource MutedTextBrush}" />
+                                <CheckBox Margin="0,18,0,0"
+                                          Content="关闭窗口时隐藏到托盘"
+                                          IsChecked="{Binding CloseToTrayOnCloseEnabled}" />
+                                <TextBlock Margin="24,6,0,0" Text="点击右上角关闭按钮时不退出程序，而是隐藏到托盘。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <TextBlock Margin="0,18,0,0" Text="默认模式" FontWeight="SemiBold" />
-                            <ComboBox Margin="0,8,0,0"
-                                      Height="40"
-                                      ItemsSource="{Binding ModeOptions}"
-                                      DisplayMemberPath="Name"
-                                      SelectedValuePath="Id"
-                                      SelectedValue="{Binding DefaultModeId, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="应用启动后会自动切到这里选中的模式。"
-                                       Foreground="{StaticResource MutedTextBrush}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
+                                <TextBlock Margin="0,18,0,0" Text="默认模式" FontWeight="SemiBold" />
+                                <ComboBox Margin="0,8,0,0"
+                                          Height="40"
+                                          ItemsSource="{Binding ModeOptions}"
+                                          DisplayMemberPath="Name"
+                                          SelectedValuePath="Id"
+                                          SelectedValue="{Binding DefaultModeId, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="应用启动后会自动切到这里选中的模式。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
 
-                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                        <StackPanel>
-                            <TextBlock Text="快捷键与保存" FontSize="18" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,8,0,0" Text="修改会保存到本机，并在下次启动时继续生效。" Foreground="{StaticResource MutedTextBrush}" />
+                        <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="快捷键与保存" FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Margin="0,8,0,0" Text="修改会保存到本机，并在下次启动时继续生效。" Foreground="{StaticResource MutedTextBrush}" />
 
-                            <TextBlock Margin="0,18,0,0" Text="桌面图标切换快捷键" FontWeight="SemiBold" />
-                            <TextBox Margin="0,8,0,0"
-                                     Height="40"
-                                     IsReadOnly="True"
-                                     Cursor="Hand"
-                                     ToolTip="点击后直接按组合键"
-                                     PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
-                                     GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
-                                     PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
-                                     PreviewTextInput="HotkeyCapture_PreviewTextInput"
-                                     Tag="DesktopToggle"
-                                     Text="{Binding DesktopToggleHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="点击输入框后直接按组合键即可录入，支持 Ctrl、Alt、Shift、Win。"
-                                       Foreground="{StaticResource MutedTextBrush}"
-                                       TextWrapping="Wrap" />
+                                <TextBlock Margin="0,18,0,0" Text="桌面图标切换快捷键" FontWeight="SemiBold" />
+                                <TextBox Margin="0,8,0,0"
+                                         Height="40"
+                                         IsReadOnly="True"
+                                         Cursor="Hand"
+                                         ToolTip="点击后直接按组合键"
+                                         PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
+                                         GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
+                                         PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
+                                         PreviewTextInput="HotkeyCapture_PreviewTextInput"
+                                         Tag="DesktopToggle"
+                                         Text="{Binding DesktopToggleHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="点击输入框后直接按组合键即可录入，支持 Ctrl、Alt、Shift、Win。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
 
-                            <TextBlock Margin="0,18,0,0" Text="显示主窗口快捷键" FontWeight="SemiBold" />
-                            <TextBox Margin="0,8,0,0"
-                                     Height="40"
-                                     IsReadOnly="True"
-                                     Cursor="Hand"
-                                     ToolTip="点击后直接按组合键"
-                                     PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
-                                     GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
-                                     PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
-                                     PreviewTextInput="HotkeyCapture_PreviewTextInput"
-                                     Tag="ShowMainWindow"
-                                     Text="{Binding ShowMainWindowHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="当任务栏被隐藏或窗口已缩到托盘时，可用这个快捷键直接拉回主窗口。"
-                                       Foreground="{StaticResource MutedTextBrush}"
-                                       TextWrapping="Wrap" />
+                                <TextBlock Margin="0,18,0,0" Text="显示主窗口快捷键" FontWeight="SemiBold" />
+                                <TextBox Margin="0,8,0,0"
+                                         Height="40"
+                                         IsReadOnly="True"
+                                         Cursor="Hand"
+                                         ToolTip="点击后直接按组合键"
+                                         PreviewMouseLeftButtonDown="HotkeyCapture_PreviewMouseLeftButtonDown"
+                                         GotKeyboardFocus="HotkeyCapture_GotKeyboardFocus"
+                                         PreviewKeyDown="HotkeyCapture_PreviewKeyDown"
+                                         PreviewTextInput="HotkeyCapture_PreviewTextInput"
+                                         Tag="ShowMainWindow"
+                                         Text="{Binding ShowMainWindowHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="当任务栏被隐藏或窗口已缩到托盘时，可用这个快捷键直接拉回主窗口。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
 
-                            <Border Margin="0,18,0,0"
-                                    Padding="16"
-                                    Background="{StaticResource SurfaceAltBrush}"
-                                    CornerRadius="14">
-                                <StackPanel>
-                                    <TextBlock Text="输入规则" FontWeight="SemiBold" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="两个快捷键都必须包含至少一个修饰键和一个主按键，按 Esc 可取消本次录入。"
-                                               Foreground="{StaticResource MutedTextBrush}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
+                                <Border Margin="0,18,0,0"
+                                        Padding="16"
+                                        Background="{StaticResource SurfaceAltBrush}"
+                                        CornerRadius="14">
+                                    <StackPanel>
+                                        <TextBlock Text="输入规则" FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="两个快捷键都必须包含至少一个修饰键和一个主按键，按 Esc 可取消本次录入。"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
 
-                            <WrapPanel Margin="0,22,0,0">
-                                <Button Width="120" Height="42" Content="保存设置" Click="SaveSettings_Click" />
-                                <Button Width="120"
-                                        Height="42"
-                                        Margin="12,0,0,0"
-                                        Content="重新加载"
-                                        Click="ReloadSettings_Click"
-                                        Style="{StaticResource SecondaryButtonStyle}" />
-                            </WrapPanel>
-                        </StackPanel>
-                    </Border>
+                                <WrapPanel Margin="0,22,0,0">
+                                    <Button Width="120" Height="42" Content="保存设置" Click="SaveSettings_Click" />
+                                    <Button Width="120"
+                                            Height="42"
+                                            Margin="12,0,0,0"
+                                            Content="重新加载"
+                                            Click="ReloadSettings_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </ScrollViewer>
             </TabItem>

@@ -18,6 +18,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _closeToTrayOnCloseEnabled;
     private bool _minimizeToTrayOnMinimizeEnabled;
     private bool _startMinimizedToTrayEnabled;
+    private bool _wallpaperChangeOnStartupEnabled;
+    private bool _wallpaperAutoRotateEnabled;
+    private bool _isWallpaperChangeInProgress;
+    private string _wallpaperRotationIntervalMinutesInput = AppSettings.DefaultWallpaperRotationIntervalMinutes.ToString();
+    private string _wallpaperScheduleText = "定时轮换：未开启";
     private string _desktopToggleHotkeyInput = AppSettings.DefaultDesktopToggleHotkey;
     private string _showMainWindowHotkeyInput = AppSettings.DefaultShowMainWindowHotkey;
     private string _statusMessage = "桌面图标、托盘和快捷键原型已可用。";
@@ -194,6 +199,81 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool WallpaperChangeOnStartupEnabled
+    {
+        get => _wallpaperChangeOnStartupEnabled;
+        set
+        {
+            if (_wallpaperChangeOnStartupEnabled == value)
+            {
+                return;
+            }
+
+            _wallpaperChangeOnStartupEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool WallpaperAutoRotateEnabled
+    {
+        get => _wallpaperAutoRotateEnabled;
+        set
+        {
+            if (_wallpaperAutoRotateEnabled == value)
+            {
+                return;
+            }
+
+            _wallpaperAutoRotateEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string WallpaperRotationIntervalMinutesInput
+    {
+        get => _wallpaperRotationIntervalMinutesInput;
+        set
+        {
+            if (_wallpaperRotationIntervalMinutesInput == value)
+            {
+                return;
+            }
+
+            _wallpaperRotationIntervalMinutesInput = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string WallpaperScheduleText
+    {
+        get => _wallpaperScheduleText;
+        private set
+        {
+            if (_wallpaperScheduleText == value)
+            {
+                return;
+            }
+
+            _wallpaperScheduleText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsWallpaperChangeInProgress
+    {
+        get => _isWallpaperChangeInProgress;
+        private set
+        {
+            if (_isWallpaperChangeInProgress == value)
+            {
+                return;
+            }
+
+            _isWallpaperChangeInProgress = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string DesktopToggleHotkeyInput
     {
         get => _desktopToggleHotkeyInput;
@@ -231,6 +311,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public ObservableCollection<ModeLayoutOptionViewModel> ModeLayoutOptions { get; } = [];
 
     public ObservableCollection<ModeOptionViewModel> ModeOptions { get; } = [];
+
+    public ObservableCollection<WallpaperSourceViewModel> WallpaperSources { get; } = [];
 
     public LayoutSummaryViewModel? SelectedLayout
     {
@@ -375,6 +457,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         CloseToTrayOnCloseEnabled = enabled;
     }
 
+    public void SetWallpaperChangeOnStartup(bool enabled)
+    {
+        WallpaperChangeOnStartupEnabled = enabled;
+    }
+
+    public void SetWallpaperAutoRotateEnabled(bool enabled)
+    {
+        WallpaperAutoRotateEnabled = enabled;
+    }
+
+    public void SetWallpaperRotationIntervalMinutesInput(string value)
+    {
+        WallpaperRotationIntervalMinutesInput = value;
+    }
+
+    public void SetWallpaperScheduleText(string value)
+    {
+        WallpaperScheduleText = value;
+    }
+
+    public void SetWallpaperChangeInProgress(bool inProgress)
+    {
+        IsWallpaperChangeInProgress = inProgress;
+    }
+
     public void SetLayoutNameInput(string value)
     {
         LayoutNameInput = value;
@@ -429,6 +536,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         foreach (var option in options)
         {
             ModeOptions.Add(option);
+        }
+    }
+
+    public void SetWallpaperSources(IEnumerable<WallpaperSourceViewModel> sources)
+    {
+        WallpaperSources.Clear();
+        foreach (var source in sources)
+        {
+            WallpaperSources.Add(source);
         }
     }
 
