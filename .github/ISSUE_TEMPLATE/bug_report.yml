@@ -1,0 +1,100 @@
+name: Bug Report
+description: 报告一个可以稳定复现的问题
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈问题。
+
+        这个项目和 Windows 桌面、分辨率、缩放、多显示器环境关系很大，信息越完整，定位越快。
+  - type: input
+    id: summary
+    attributes:
+      label: 问题概述
+      description: 用一句话描述出了什么问题
+      placeholder: 例如：切换到演示模式后，任务栏没有隐藏
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 请按顺序写出复现过程
+      placeholder: |
+        1. 打开应用
+        2. 切换到某个模式
+        3. 点击某个按钮
+        4. 观察到异常
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      placeholder: 例如：应当隐藏任务栏并刷新状态文本
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      placeholder: 例如：状态提示已切换，但任务栏仍可见
+    validations:
+      required: true
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows 版本
+      description: 例如 Windows 11 24H2 / Windows 10 22H2
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: 应用版本或提交
+      description: 如果是源码运行，请尽量提供 commit hash
+      placeholder: 例如 v0.1.0 或 2942b0b
+    validations:
+      required: true
+  - type: dropdown
+    id: monitor-setup
+    attributes:
+      label: 显示环境
+      description: 选择最接近你的场景
+      options:
+        - 单显示器
+        - 双显示器
+        - 三个及以上显示器
+        - 不确定
+    validations:
+      required: true
+  - type: input
+    id: scaling
+    attributes:
+      label: 缩放比例
+      description: 如果和布局恢复、窗口尺寸、预览错位有关，这个信息很重要
+      placeholder: 例如 100% / 125% / 主屏 150% 副屏 100%
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: 相关功能
+      options:
+        - 托盘
+        - 桌面图标显示/隐藏
+        - 任务栏显示/隐藏
+        - 布局保存/恢复
+        - 模式切换
+        - 壁纸切换/轮换
+        - 快捷键
+        - 设置
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: 日志、截图或补充信息
+      description: 可粘贴报错、截图，或说明问题是否稳定复现
+      placeholder: 如果有异常弹窗、控制台输出、录屏或截图，可以放在这里

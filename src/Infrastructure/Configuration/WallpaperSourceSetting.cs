@@ -29,6 +29,7 @@ public sealed class WallpaperSourceSetting
         return kind switch
         {
             WallpaperSourceKind.LocalFile => TryNormalizeLocalFilePath(value, out normalizedValue),
+            WallpaperSourceKind.LocalFolder => TryNormalizeLocalDirectoryPath(value, out normalizedValue),
             _ => TryNormalizeRemoteUrl(value, out normalizedValue)
         };
     }
@@ -52,6 +53,55 @@ public sealed class WallpaperSourceSetting
     }
 
     public static bool TryNormalizeLocalFilePath(string? value, out string normalizedPath)
+    {
+        if (!TryNormalizeLocalPath(value, out normalizedPath))
+        {
+            return false;
+        }
+
+        return IsSupportedLocalImagePath(normalizedPath);
+    }
+
+    public static bool TryNormalizeLocalDirectoryPath(string? value, out string normalizedPath)
+    {
+        return TryNormalizeLocalPath(value, out normalizedPath);
+    }
+
+    public static IReadOnlyList<string> GetSupportedLocalImageFiles(string? directoryPath)
+    {
+        if (!TryNormalizeLocalDirectoryPath(directoryPath, out var normalizedDirectory)
+            || !Directory.Exists(normalizedDirectory))
+        {
+            return [];
+        }
+
+        try
+        {
+            return Directory
+                .EnumerateFiles(normalizedDirectory, "*", SearchOption.TopDirectoryOnly)
+                .Where(IsSupportedLocalImagePath)
+                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public static bool IsSupportedLocalImagePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(path);
+        return !string.IsNullOrWhiteSpace(extension)
+            && SupportedLocalImageExtensions.Contains(extension);
+    }
+
+    private static bool TryNormalizeLocalPath(string? value, out string normalizedPath)
     {
         normalizedPath = string.Empty;
         if (string.IsNullOrWhiteSpace(value))
@@ -79,18 +129,6 @@ public sealed class WallpaperSourceSetting
             return false;
         }
 
-        return IsSupportedLocalImagePath(normalizedPath);
-    }
-
-    public static bool IsSupportedLocalImagePath(string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return false;
-        }
-
-        var extension = Path.GetExtension(path);
-        return !string.IsNullOrWhiteSpace(extension)
-            && SupportedLocalImageExtensions.Contains(extension);
+        return true;
     }
 }

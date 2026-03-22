@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="..\..\docs\img\logol.png" Link="Assets\logol.png" />
     <Compile Include="..\Application\Layouts\*.cs" />
     <Compile Include="..\Application\Modes\*.cs" />
     <Compile Include="..\Application\Wallpapers\*.cs" />

@@ -249,6 +249,7 @@ public partial class MainWindow : System.Windows.Window
     {
         RefreshDesktopIconState();
         RefreshTaskbarState();
+        _viewModel.RefreshWallpaperSourceStates();
     }
 
     private async void ToggleTaskbar_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -300,6 +301,8 @@ public partial class MainWindow : System.Windows.Window
             _viewModel.SetStatus(
                 source.Kind == WallpaperSourceKind.LocalFile
                     ? $"已添加本地图片“{source.Name}”，记得保存设置。"
+                    : source.Kind == WallpaperSourceKind.LocalFolder
+                        ? $"已添加本地文件夹“{source.Name}”，记得保存设置。"
                     : $"已添加自定义壁纸源“{source.Name}”，记得保存设置。");
         }
         catch (Exception ex)
@@ -312,23 +315,10 @@ public partial class MainWindow : System.Windows.Window
     {
         try
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Title = "选择本地壁纸图片",
-                Filter = "图片文件|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp",
-                CheckFileExists = true,
-                CheckPathExists = true,
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog(this) != true)
+            var normalizedPath = SelectLocalWallpaperFile();
+            if (string.IsNullOrWhiteSpace(normalizedPath))
             {
                 return;
-            }
-
-            if (!WallpaperSourceSetting.TryNormalizeLocalFilePath(dialog.FileName, out var normalizedPath))
-            {
-                throw new InvalidOperationException("当前选择的文件不是受支持的本地图片。");
             }
 
             _viewModel.NewWallpaperSourceUrl = normalizedPath;
@@ -342,6 +332,81 @@ public partial class MainWindow : System.Windows.Window
         catch (Exception ex)
         {
             _viewModel.SetStatus($"选择本地图片失败：{ex.Message}");
+        }
+    }
+
+    private void SelectLocalWallpaperFolder_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var normalizedPath = SelectLocalWallpaperFolder();
+            if (string.IsNullOrWhiteSpace(normalizedPath))
+            {
+                return;
+            }
+
+            _viewModel.NewWallpaperSourceUrl = normalizedPath;
+            if (string.IsNullOrWhiteSpace(_viewModel.NewWallpaperSourceName))
+            {
+                _viewModel.NewWallpaperSourceName = Path.GetFileName(normalizedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            }
+
+            _viewModel.SetStatus("已选中文件夹，点击“添加到图源库”后即可参与壁纸轮换。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"选择本地文件夹失败：{ex.Message}");
+        }
+    }
+
+    private void ReselectLocalWallpaperFile_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.FrameworkElement { DataContext: WallpaperSourceViewModel source })
+        {
+            return;
+        }
+
+        if (source.Kind is not WallpaperSourceKind.LocalFile and not WallpaperSourceKind.LocalFolder)
+        {
+            _viewModel.SetStatus("只有本地图源支持重新选择。");
+            return;
+        }
+
+        try
+        {
+            var previousPath = source.RequestUrl;
+            var selectedPath = source.Kind == WallpaperSourceKind.LocalFolder
+                ? SelectLocalWallpaperFolder(previousPath)
+                : SelectLocalWallpaperFile(previousPath);
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            source.RequestUrl = selectedPath;
+            var previousBaseName = source.Kind == WallpaperSourceKind.LocalFolder
+                ? Path.GetFileName(previousPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                : Path.GetFileNameWithoutExtension(previousPath);
+            if (string.IsNullOrWhiteSpace(source.Name)
+                || string.Equals(source.Name, previousBaseName, StringComparison.OrdinalIgnoreCase))
+            {
+                source.Name = source.Kind == WallpaperSourceKind.LocalFolder
+                    ? Path.GetFileName(selectedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                    : Path.GetFileNameWithoutExtension(selectedPath);
+            }
+
+            source.RefreshComputedState();
+            _viewModel.SetStatus(
+                source.Kind == WallpaperSourceKind.LocalFolder
+                    ? $"已更新本地文件夹“{source.Name}”，记得保存设置。"
+                    : $"已更新本地图片“{source.Name}”，记得保存设置。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus(
+                source.Kind == WallpaperSourceKind.LocalFolder
+                    ? $"重新选择本地文件夹失败：{ex.Message}"
+                    : $"重新选择本地图片失败：{ex.Message}");
         }
     }
 
@@ -380,7 +445,7 @@ public partial class MainWindow : System.Windows.Window
         var location = _viewModel.NewWallpaperSourceUrl.Trim();
         if (string.IsNullOrWhiteSpace(location))
         {
-            throw new InvalidOperationException("请输入图源地址，或选择一张本地图片。");
+            throw new InvalidOperationException("请输入图源地址，或选择本地图片/文件夹。");
         }
 
         if (WallpaperSourceSetting.TryNormalizeRemoteUrl(location, out var normalizedRemoteUrl))
@@ -424,7 +489,29 @@ public partial class MainWindow : System.Windows.Window
             };
         }
 
-        throw new InvalidOperationException("请输入有效的 http/https 地址，或选择 JPG、PNG、BMP、GIF、WEBP 格式的本地图片。");
+        if (WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(location, out var normalizedLocalDirectory))
+        {
+            if (!Directory.Exists(normalizedLocalDirectory))
+            {
+                throw new InvalidOperationException("选择的本地文件夹不存在。");
+            }
+
+            var resolvedName = string.IsNullOrWhiteSpace(sourceName)
+                ? Path.GetFileName(normalizedLocalDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                : sourceName;
+            EnsureUniqueWallpaperSource(WallpaperSourceKind.LocalFolder, normalizedLocalDirectory, "这个本地文件夹已经在图源列表里了。");
+            return new WallpaperSourceViewModel
+            {
+                Id = $"folder-{Guid.NewGuid():N}",
+                Name = resolvedName,
+                RequestUrl = normalizedLocalDirectory,
+                Kind = WallpaperSourceKind.LocalFolder,
+                Enabled = true,
+                IsBuiltIn = false
+            };
+        }
+
+        throw new InvalidOperationException("请输入有效的 http/https 地址，或选择 JPG、PNG、BMP、GIF、WEBP 图片，或一个本地文件夹。");
     }
 
     private void EnsureUniqueWallpaperSource(WallpaperSourceKind kind, string normalizedLocation, string errorMessage)
@@ -438,6 +525,68 @@ public partial class MainWindow : System.Windows.Window
         {
             throw new InvalidOperationException(errorMessage);
         }
+    }
+
+    private string? SelectLocalWallpaperFile(string? currentPath = null)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "选择本地壁纸图片",
+            Filter = "图片文件|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp",
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false
+        };
+
+        if (WallpaperSourceSetting.TryNormalizeLocalFilePath(currentPath, out var normalizedCurrentPath))
+        {
+            var initialDirectory = Path.GetDirectoryName(normalizedCurrentPath);
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && Directory.Exists(initialDirectory))
+            {
+                dialog.InitialDirectory = initialDirectory;
+                dialog.FileName = Path.GetFileName(normalizedCurrentPath);
+            }
+        }
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return null;
+        }
+
+        if (!WallpaperSourceSetting.TryNormalizeLocalFilePath(dialog.FileName, out var normalizedPath))
+        {
+            throw new InvalidOperationException("当前选择的文件不是受支持的本地图片。");
+        }
+
+        return normalizedPath;
+    }
+
+    private string? SelectLocalWallpaperFolder(string? currentPath = null)
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "选择包含壁纸图片的文件夹",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false
+        };
+
+        if (WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(currentPath, out var normalizedCurrentPath)
+            && Directory.Exists(normalizedCurrentPath))
+        {
+            dialog.InitialDirectory = normalizedCurrentPath;
+        }
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return null;
+        }
+
+        if (!WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(dialog.SelectedPath, out var normalizedPath))
+        {
+            throw new InvalidOperationException("当前选择的文件夹路径无效。");
+        }
+
+        return normalizedPath;
     }
 
     private async Task ChangeWallpaperAsync(bool isStartup, bool isScheduled = false)
@@ -578,6 +727,9 @@ public partial class MainWindow : System.Windows.Window
             {
                 WallpaperSourceKind.LocalFile => WallpaperSourceSetting.TryNormalizeLocalFilePath(source.RequestUrl, out var localPath)
                     && File.Exists(localPath),
+                WallpaperSourceKind.LocalFolder => WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(source.RequestUrl, out var localDirectory)
+                    && Directory.Exists(localDirectory)
+                    && WallpaperSourceSetting.GetSupportedLocalImageFiles(localDirectory).Count > 0,
                 _ => WallpaperSourceSetting.TryNormalizeRemoteUrl(source.RequestUrl, out _)
             };
         });

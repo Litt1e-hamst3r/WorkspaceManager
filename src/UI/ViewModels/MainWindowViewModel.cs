@@ -607,6 +607,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             WallpaperSources.Add(source);
         }
 
+        RefreshWallpaperSourceStates();
         RefreshWallpaperSourceSummary();
     }
 
@@ -614,6 +615,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         NewWallpaperSourceName = string.Empty;
         NewWallpaperSourceUrl = string.Empty;
+    }
+
+    public void RefreshWallpaperSourceStates()
+    {
+        foreach (var source in WallpaperSources)
+        {
+            source.RefreshComputedState();
+        }
     }
 
     public void SetSelectedModeLayoutId(string? layoutId)
@@ -652,6 +661,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 source.PropertyChanged -= OnWallpaperSourcePropertyChanged;
                 source.PropertyChanged += OnWallpaperSourcePropertyChanged;
+                source.RefreshComputedState();
             }
         }
 

@@ -1,0 +1,77 @@
+name: Feature Request
+description: 提出一个值得加入项目的想法
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎提需求。
+
+        如果能把使用场景讲清楚，通常比直接说“加一个按钮”更有帮助。
+  - type: input
+    id: summary
+    attributes:
+      label: 需求概述
+      description: 用一句话概括你希望新增什么
+      placeholder: 例如：支持一键导出当前布局和模式配置
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你的使用场景
+      description: 这个需求要解决什么问题
+      placeholder: |
+        我在什么场景下使用这个工具？
+        现在卡在哪一步？
+        为什么现有能力不够？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你期望的方案
+      description: 不要求写得像 PRD，但请尽量具体
+      placeholder: |
+        我希望新增什么入口？
+        触发后应该发生什么？
+        有哪些边界情况需要考虑？
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 你考虑过的替代方案
+      description: 如果有的话，请写出来
+      placeholder: 例如：目前只能手动做某件事，但流程太长/容易忘
+  - type: dropdown
+    id: impact
+    attributes:
+      label: 影响范围
+      description: 你觉得这个需求更偏向哪类改进
+      options:
+        - 桌面效率
+        - 演示/录屏体验
+        - 布局稳定性
+        - 壁纸体验
+        - 托盘与快捷操作
+        - 设置与配置
+        - 开发者体验
+        - 其他
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 你的优先级感受
+      options:
+        - 高，已经明显影响使用
+        - 中，有会更顺手
+        - 低，属于锦上添花
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他补充
+      description: 可附草图、参考链接、交互示意或截图

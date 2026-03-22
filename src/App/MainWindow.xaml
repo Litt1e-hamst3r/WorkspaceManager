@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:WorkspaceManager.UI.ViewModels"
         Title="Workspace Manager"
+        Icon="pack://application:,,,/Assets/logol.png"
         Height="780"
         Width="1340"
         MinHeight="700"
@@ -52,26 +53,44 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <StackPanel>
-                            <Border Style="{StaticResource PillBorderStyle}"
-                                    Background="{StaticResource AccentSoftBrush}"
-                                    BorderBrush="{StaticResource AccentSoftBrush}"
-                                    HorizontalAlignment="Left">
-                                <TextBlock Text="桌面工作台"
-                                           Foreground="{StaticResource AccentBrush}"
-                                           FontWeight="SemiBold" />
-                            </Border>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                            <TextBlock Margin="0,10,0,0"
-                                       Text="{Binding AppName}"
-                                       FontSize="24"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Margin="0,6,0,0"
-                                       Text="{Binding StatusMessage}"
-                                       FontSize="13"
-                                       Foreground="{StaticResource MutedTextBrush}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
+                            <Image Source="pack://application:,,,/Assets/logol.png"
+                                   MaxHeight="46"
+                                   Margin="0,2,0,0"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Top"
+                                   Stretch="Uniform"
+                                   SnapsToDevicePixels="True"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+
+                            <StackPanel Grid.Column="1"
+                                        Margin="14,0,0,0"
+                                        VerticalAlignment="Center">
+                                <Border Style="{StaticResource PillBorderStyle}"
+                                        Background="{StaticResource AccentSoftBrush}"
+                                        BorderBrush="{StaticResource AccentSoftBrush}"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="桌面工作台"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="{Binding AppName}"
+                                           FontSize="24"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Text="{Binding StatusMessage}"
+                                           FontSize="13"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
 
                         <Border Grid.Row="1"
                                 Margin="0,16,0,0"
@@ -1151,7 +1170,7 @@
                                            FontSize="18"
                                            FontWeight="SemiBold" />
                                 <TextBlock Margin="0,6,0,0"
-                                           Text="支持在线图片地址，也支持直接选择本地 JPG、PNG、BMP、GIF、WEBP 图片。"
+                                           Text="支持在线图片地址，也支持直接选择本地图片或包含图片的文件夹。"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
 
@@ -1187,29 +1206,22 @@
                                              Text="{Binding NewWallpaperSourceUrl, UpdateSourceTrigger=PropertyChanged}" />
                                 </Grid>
 
-                                <Grid Margin="0,14,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
+                                <WrapPanel Margin="0,14,0,0">
                                     <Button Width="138"
+                                            Margin="0,0,10,10"
                                             Content="添加到图源库"
                                             Click="AddWallpaperSource_Click" />
-                                    <Button Grid.Column="1"
-                                            Width="118"
-                                            Margin="10,0,0,0"
+                                    <Button Width="118"
+                                            Margin="0,0,10,10"
                                             Content="选择本地图片"
                                             Click="SelectLocalWallpaperFile_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <TextBlock Grid.Column="2"
-                                               Margin="12,0,0,0"
-                                               VerticalAlignment="Center"
-                                               Text="内置源建议停用而不是删除；选择本地图片后会自动填入路径，保存后可参与手动和定时轮换。"
-                                               Foreground="{StaticResource MutedTextBrush}"
-                                               TextWrapping="Wrap" />
-                                </Grid>
+                                    <Button Width="118"
+                                            Margin="0,0,10,10"
+                                            Content="选择文件夹"
+                                            Click="SelectLocalWallpaperFolder_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
 
@@ -1229,7 +1241,7 @@
                                                    FontSize="18"
                                                    FontWeight="SemiBold" />
                                         <TextBlock Margin="0,6,0,0"
-                                                   Text="内置源建议按需停用；自定义接口和本地图片都支持删除，并会跟随本地配置一起保存。"
+                                                   Text="内置源建议按需停用；自定义接口、本地图片和本地文件夹都支持删除，并会跟随本地配置一起保存。"
                                                    Foreground="{StaticResource MutedTextBrush}"
                                                    TextWrapping="Wrap" />
                                     </StackPanel>
@@ -1269,9 +1281,18 @@
                                                 <Border Margin="0,0,0,8"
                                                         Padding="14,12"
                                                         Background="{StaticResource SurfaceBrush}"
-                                                        BorderBrush="{StaticResource CardBorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="16">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasHealthIssue}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource ActionBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
@@ -1322,6 +1343,37 @@
                                                                                    FontWeight="SemiBold"
                                                                                    Foreground="{StaticResource StrongTextBrush}" />
                                                                     </Border>
+                                                                    <Border Margin="8,0,0,0"
+                                                                            Padding="10,4"
+                                                                            BorderThickness="1"
+                                                                            CornerRadius="999">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                                                                <Setter Property="BorderBrush" Value="{StaticResource AccentSoftStrongBrush}" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding HasHealthIssue}" Value="True">
+                                                                                        <Setter Property="Background" Value="{StaticResource ActionSoftBrush}" />
+                                                                                        <Setter Property="BorderBrush" Value="{StaticResource ActionBrush}" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <TextBlock Text="{Binding AvailabilityText}"
+                                                                                   FontSize="12"
+                                                                                   FontWeight="SemiBold">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding HasHealthIssue}" Value="True">
+                                                                                            <Setter Property="Foreground" Value="{StaticResource ActionBrush}" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Border>
                                                                 </WrapPanel>
                                                             </Grid>
 
@@ -1330,16 +1382,39 @@
                                                                        FontSize="12"
                                                                        Foreground="{StaticResource MutedTextBrush}"
                                                                        TextWrapping="Wrap" />
+                                                            <TextBlock Margin="24,6,0,0"
+                                                                       FontSize="12"
+                                                                       Text="{Binding AvailabilityDetailText}"
+                                                                       TextWrapping="Wrap">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasHealthIssue}" Value="True">
+                                                                                <Setter Property="Foreground" Value="{StaticResource ActionBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="1"
-                                                                Width="74"
-                                                                Height="34"
-                                                                Content="删除"
-                                                                VerticalAlignment="Top"
-                                                                Click="DeleteWallpaperSource_Click"
-                                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                                Visibility="{Binding CanDelete, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                        <StackPanel Grid.Column="1"
+                                                                    VerticalAlignment="Top">
+                                                            <Button Width="74"
+                                                                    Height="34"
+                                                                    Margin="0,0,0,8"
+                                                                    Content="重选"
+                                                                    Click="ReselectLocalWallpaperFile_Click"
+                                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                                    Visibility="{Binding CanReselect, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                            <Button Width="74"
+                                                                    Height="34"
+                                                                    Content="删除"
+                                                                    Click="DeleteWallpaperSource_Click"
+                                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                                    Visibility="{Binding CanDelete, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                        </StackPanel>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

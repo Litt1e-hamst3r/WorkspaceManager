@@ -172,12 +172,45 @@ public sealed class WallpaperRotationService
                 throw new FileNotFoundException("本地图片不存在。", localPath);
             }
 
-            return new PreparedWallpaper(source.Id, source.Name, localPath);
+            return await PrepareLocalImageFileAsync(source.Id, source.Name, localPath, cancellationToken);
+        }
+
+        if (source.Kind == WallpaperSourceKind.LocalFolder)
+        {
+            if (!WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(source.RequestUrl, out var localDirectory))
+            {
+                throw new InvalidOperationException("本地图片文件夹路径无效。");
+            }
+
+            if (!Directory.Exists(localDirectory))
+            {
+                throw new DirectoryNotFoundException($"本地图片文件夹不存在：{localDirectory}");
+            }
+
+            var candidateFiles = WallpaperSourceSetting.GetSupportedLocalImageFiles(localDirectory);
+            if (candidateFiles.Count == 0)
+            {
+                throw new InvalidOperationException("本地图片文件夹中没有可用图片。");
+            }
+
+            var selectedFile = candidateFiles[Random.Shared.Next(candidateFiles.Count)];
+            return await PrepareLocalImageFileAsync(source.Id, source.Name, selectedFile, cancellationToken);
         }
 
         var downloadedImage = await DownloadResolvedImageAsync(source.RequestUrl, cancellationToken);
         var savedPath = _wallpaperImageStore.Save(downloadedImage.Content, downloadedImage.Extension);
         return new PreparedWallpaper(source.Id, source.Name, savedPath);
+    }
+
+    private async Task<PreparedWallpaper> PrepareLocalImageFileAsync(
+        string sourceId,
+        string sourceName,
+        string localPath,
+        CancellationToken cancellationToken)
+    {
+        var content = await File.ReadAllBytesAsync(localPath, cancellationToken);
+        var savedPath = _wallpaperImageStore.Save(content, Path.GetExtension(localPath));
+        return new PreparedWallpaper(sourceId, sourceName, savedPath);
     }
 
     private async Task<DownloadedImage> DownloadResolvedImageAsync(string requestUrl, CancellationToken cancellationToken)
@@ -240,9 +273,18 @@ public sealed class WallpaperRotationService
                     return null;
                 }
 
-                if (source.Kind == WallpaperSourceKind.LocalFile && !File.Exists(normalizedLocation))
+                switch (source.Kind)
                 {
-                    return null;
+                    case WallpaperSourceKind.LocalFile when !File.Exists(normalizedLocation):
+                        return null;
+                    case WallpaperSourceKind.LocalFolder:
+                        if (!Directory.Exists(normalizedLocation)
+                            || WallpaperSourceSetting.GetSupportedLocalImageFiles(normalizedLocation).Count == 0)
+                        {
+                            return null;
+                        }
+
+                        break;
                 }
 
                 return new WallpaperSourceSetting
