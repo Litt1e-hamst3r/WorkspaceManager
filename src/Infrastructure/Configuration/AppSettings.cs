@@ -29,6 +29,12 @@ public sealed class AppSettings
 
     public List<WallpaperSourceSetting> WallpaperSources { get; set; } = CreateDefaultWallpaperSources();
 
+    public static bool IsBuiltInWallpaperSourceId(string? id)
+    {
+        return !string.IsNullOrWhiteSpace(id)
+            && CreateDefaultWallpaperSources().Any(source => string.Equals(source.Id, id, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static List<WallpaperSourceSetting> CreateDefaultWallpaperSources()
     {
         return

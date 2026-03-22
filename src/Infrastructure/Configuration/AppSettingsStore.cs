@@ -73,12 +73,16 @@ public sealed class AppSettingsStore
             return defaults;
         }
 
+        var builtInIds = defaults
+            .Select(source => source.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var currentById = currentSources
             .Where(source => !string.IsNullOrWhiteSpace(source.Id))
             .GroupBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.Last(), StringComparer.OrdinalIgnoreCase);
 
-        return defaults
+        var mergedSources = defaults
             .Select(defaultSource =>
             {
                 if (!currentById.TryGetValue(defaultSource.Id, out var savedSource))
@@ -95,5 +99,26 @@ public sealed class AppSettingsStore
                 };
             })
             .ToList();
+
+        var customSources = currentSources
+            .Where(source => !string.IsNullOrWhiteSpace(source.Id))
+            .Where(source => !builtInIds.Contains(source.Id))
+            .Where(source => !string.IsNullOrWhiteSpace(source.Name))
+            .Where(source => Uri.TryCreate(source.RequestUrl, UriKind.Absolute, out _))
+            .GroupBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var source = group.Last();
+                return new WallpaperSourceSetting
+                {
+                    Id = source.Id,
+                    Name = source.Name.Trim(),
+                    RequestUrl = source.RequestUrl.Trim(),
+                    Enabled = source.Enabled
+                };
+            });
+
+        mergedSources.AddRange(customSources);
+        return mergedSources;
     }
 }

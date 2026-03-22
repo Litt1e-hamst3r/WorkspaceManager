@@ -39,12 +39,17 @@ public sealed class MainWindowViewDataBuilder
 
     public IReadOnlyList<WallpaperSourceViewModel> BuildWallpaperSources(IEnumerable<WallpaperSourceSetting> sources)
     {
+        var builtInIds = AppSettings.CreateDefaultWallpaperSources()
+            .Select(source => source.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         return sources
             .Select(source => new WallpaperSourceViewModel
             {
                 Id = source.Id,
                 Name = source.Name,
                 RequestUrl = source.RequestUrl,
+                IsBuiltIn = builtInIds.Contains(source.Id),
                 Enabled = source.Enabled
             })
             .ToList();

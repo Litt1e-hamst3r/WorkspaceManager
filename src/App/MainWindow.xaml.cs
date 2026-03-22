@@ -289,6 +289,76 @@ public partial class MainWindow : System.Windows.Window
         _viewModel.SetStatus("已启用全部壁纸源，记得保存设置。");
     }
 
+    private void AddWallpaperSource_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var sourceName = _viewModel.NewWallpaperSourceName.Trim();
+            var requestUrl = _viewModel.NewWallpaperSourceUrl.Trim();
+            if (string.IsNullOrWhiteSpace(sourceName))
+            {
+                throw new InvalidOperationException("请输入图源名称。");
+            }
+
+            if (!Uri.TryCreate(requestUrl, UriKind.Absolute, out var requestUri)
+                || (requestUri.Scheme != Uri.UriSchemeHttp && requestUri.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new InvalidOperationException("请输入有效的 http 或 https 地址。");
+            }
+
+            var normalizedRequestUrl = requestUri.AbsoluteUri.TrimEnd('/');
+            if (_viewModel.WallpaperSources.Any(source =>
+                    string.Equals(source.RequestUrl.Trim().TrimEnd('/'), normalizedRequestUrl, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("这个地址已经在图源列表里了。");
+            }
+
+            _viewModel.WallpaperSources.Add(new WallpaperSourceViewModel
+            {
+                Id = $"custom-{Guid.NewGuid():N}",
+                Name = sourceName,
+                RequestUrl = requestUri.AbsoluteUri,
+                Enabled = true,
+                IsBuiltIn = false
+            });
+            _viewModel.ClearWallpaperSourceDraft();
+            _viewModel.SetStatus($"已添加自定义壁纸源“{sourceName}”，记得保存设置。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"添加壁纸源失败：{ex.Message}");
+        }
+    }
+
+    private void DeleteWallpaperSource_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.FrameworkElement { DataContext: WallpaperSourceViewModel source })
+        {
+            return;
+        }
+
+        if (source.IsBuiltIn)
+        {
+            _viewModel.SetStatus("内置图源不支持删除，可直接取消启用。");
+            return;
+        }
+
+        var result = System.Windows.MessageBox.Show(
+            this,
+            $"确定删除自定义壁纸源“{source.Name}”吗？",
+            "删除壁纸源",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (result != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _viewModel.WallpaperSources.Remove(source);
+        _viewModel.SetStatus($"已删除自定义壁纸源“{source.Name}”，记得保存设置。");
+    }
+
     private async Task ChangeWallpaperAsync(bool isStartup, bool isScheduled = false)
     {
         if (_isWallpaperChangeInProgress)
@@ -347,8 +417,8 @@ public partial class MainWindow : System.Windows.Window
             .Select(source => new WallpaperSourceSetting
             {
                 Id = source.Id,
-                Name = source.Name,
-                RequestUrl = source.RequestUrl,
+                Name = source.Name.Trim(),
+                RequestUrl = source.RequestUrl.Trim(),
                 Enabled = source.Enabled
             })
             .ToList();
@@ -1009,6 +1079,7 @@ public partial class MainWindow : System.Windows.Window
                 : _appSettings.DefaultModeId);
 
         _viewDataBuilder.ApplySettings(_viewModel, _appSettings, defaultModeName);
+        _viewModel.ClearWallpaperSourceDraft();
     }
 
     private void LoadLayoutsIntoView()

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using WorkspaceManager.Infrastructure.Configuration;
 
@@ -8,6 +9,8 @@ namespace WorkspaceManager.UI.ViewModels;
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private string _layoutNameInput = string.Empty;
+    private string _newWallpaperSourceName = string.Empty;
+    private string _newWallpaperSourceUrl = string.Empty;
     private bool _launchAtStartupEnabled;
     private string _defaultModeId = AppSettings.DefaultModeIdValue;
     private LayoutSummaryViewModel? _selectedLayout;
@@ -23,6 +26,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _isWallpaperChangeInProgress;
     private string _wallpaperRotationIntervalMinutesInput = AppSettings.DefaultWallpaperRotationIntervalMinutes.ToString();
     private string _wallpaperScheduleText = "定时轮换：未开启";
+    private string _wallpaperSourceSummaryText = "已启用 0/0 · 自定义 0";
     private string _desktopToggleHotkeyInput = AppSettings.DefaultDesktopToggleHotkey;
     private string _showMainWindowHotkeyInput = AppSettings.DefaultShowMainWindowHotkey;
     private string _statusMessage = "桌面图标、托盘和快捷键原型已可用。";
@@ -31,6 +35,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _hotkeyText = "全局快捷键：未启用";
     private string _currentModeText = "当前模式：未应用";
     private string _defaultModeText = "默认模式：默认模式";
+
+    public MainWindowViewModel()
+    {
+        WallpaperSources.CollectionChanged += OnWallpaperSourcesCollectionChanged;
+        RefreshWallpaperSourceSummary();
+    }
 
     public string AppName => "Workspace Manager";
 
@@ -90,6 +100,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _layoutNameInput = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string NewWallpaperSourceName
+    {
+        get => _newWallpaperSourceName;
+        set
+        {
+            if (_newWallpaperSourceName == value)
+            {
+                return;
+            }
+
+            _newWallpaperSourceName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string NewWallpaperSourceUrl
+    {
+        get => _newWallpaperSourceUrl;
+        set
+        {
+            if (_newWallpaperSourceUrl == value)
+            {
+                return;
+            }
+
+            _newWallpaperSourceUrl = value;
             OnPropertyChanged();
         }
     }
@@ -255,6 +295,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             _wallpaperScheduleText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string WallpaperSourceSummaryText
+    {
+        get => _wallpaperSourceSummaryText;
+        private set
+        {
+            if (_wallpaperSourceSummaryText == value)
+            {
+                return;
+            }
+
+            _wallpaperSourceSummaryText = value;
             OnPropertyChanged();
         }
     }
@@ -541,11 +596,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void SetWallpaperSources(IEnumerable<WallpaperSourceViewModel> sources)
     {
+        foreach (var existingSource in WallpaperSources)
+        {
+            existingSource.PropertyChanged -= OnWallpaperSourcePropertyChanged;
+        }
+
         WallpaperSources.Clear();
         foreach (var source in sources)
         {
             WallpaperSources.Add(source);
         }
+
+        RefreshWallpaperSourceSummary();
+    }
+
+    public void ClearWallpaperSourceDraft()
+    {
+        NewWallpaperSourceName = string.Empty;
+        NewWallpaperSourceUrl = string.Empty;
     }
 
     public void SetSelectedModeLayoutId(string? layoutId)
@@ -566,5 +634,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void OnWallpaperSourcesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (WallpaperSourceViewModel source in e.OldItems)
+            {
+                source.PropertyChanged -= OnWallpaperSourcePropertyChanged;
+            }
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (WallpaperSourceViewModel source in e.NewItems)
+            {
+                source.PropertyChanged -= OnWallpaperSourcePropertyChanged;
+                source.PropertyChanged += OnWallpaperSourcePropertyChanged;
+            }
+        }
+
+        RefreshWallpaperSourceSummary();
+    }
+
+    private void OnWallpaperSourcePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(WallpaperSourceViewModel.Enabled), StringComparison.Ordinal))
+        {
+            RefreshWallpaperSourceSummary();
+        }
+    }
+
+    private void RefreshWallpaperSourceSummary()
+    {
+        var totalCount = WallpaperSources.Count;
+        var enabledCount = WallpaperSources.Count(source => source.Enabled);
+        var customCount = WallpaperSources.Count(source => !source.IsBuiltIn);
+        WallpaperSourceSummaryText = $"已启用 {enabledCount}/{totalCount} · 自定义 {customCount}";
     }
 }

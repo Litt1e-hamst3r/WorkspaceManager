@@ -13,6 +13,14 @@ public sealed class WallpaperSourceViewModel : INotifyPropertyChanged
 
     public string RequestUrl { get; set; } = string.Empty;
 
+    public bool IsBuiltIn { get; set; }
+
+    public bool CanDelete => !IsBuiltIn;
+
+    public string SourceTypeText => IsBuiltIn ? "内置源" : "自定义";
+
+    public string EnabledText => Enabled ? "已启用" : "已停用";
+
     public bool Enabled
     {
         get => _enabled;
@@ -25,6 +33,7 @@ public sealed class WallpaperSourceViewModel : INotifyPropertyChanged
 
             _enabled = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Enabled)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EnabledText)));
         }
     }
 

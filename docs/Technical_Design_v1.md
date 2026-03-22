@@ -312,6 +312,8 @@ logs/
 - `WallpaperAutoRotateEnabled`
 - `WallpaperRotationIntervalMinutes`
 - `WallpaperSources`
+  - 内置图源与用户手动添加的自定义图源共同持久化
+  - 读取配置时自动补齐缺失的内置图源，并保留合法的自定义图源
 - `LogLevel`
 
 ## 8.2 `HotkeyDefinition`
@@ -353,6 +355,7 @@ logs/
 - 将图片缓存到本地后再调用 Windows 壁纸接口，避免直接依赖远端 URL
 - 使用后台预取缓存下一张壁纸，降低手动切换等待时间
 - 壁纸源配置跟随 `AppSettings` 持久化，允许禁用不稳定图源
+- 支持在 UI 中手动添加和删除自定义壁纸源；内置图源不可删除，只能停用
 - `WallpaperAutoRotationService` 使用 `PeriodicTimer` 按分钟间隔触发轮换请求
 - 定时轮换始终基于已保存配置执行，避免 UI 中未保存的勾选项直接影响后台行为
 

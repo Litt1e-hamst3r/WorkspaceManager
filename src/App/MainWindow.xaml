@@ -3,84 +3,201 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:WorkspaceManager.UI.ViewModels"
         Title="Workspace Manager"
-        Height="640"
-        Width="920"
-        MinHeight="560"
-        MinWidth="820"
+        Height="780"
+        Width="1340"
+        MinHeight="700"
+        MinWidth="1180"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <TextBlock Text="{Binding AppName}"
-                       FontSize="26"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center" />
-
-            <Border Grid.Column="1"
-                    Margin="16,0,0,0"
-                    Padding="12,8"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    VerticalAlignment="Center">
-                <TextBlock Text="{Binding DesktopIconStateText}"
-                           Foreground="{StaticResource StrongTextBrush}"
-                           FontWeight="SemiBold" />
-            </Border>
-
-            <Border Grid.Column="2"
-                    Margin="12,0,0,0"
-                    Padding="12,8"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    VerticalAlignment="Center">
-                <TextBlock Text="{Binding TaskbarStateText}"
-                           Foreground="{StaticResource StrongTextBrush}"
-                           FontWeight="SemiBold" />
-            </Border>
-
-            <Border Grid.Column="3"
-                    Margin="12,0,0,0"
-                    Padding="12,8"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    VerticalAlignment="Center">
-                <TextBlock Text="{Binding HotkeyText}"
-                           Foreground="{StaticResource MutedTextBrush}"
-                           FontWeight="SemiBold" />
-            </Border>
+        <Grid IsHitTestVisible="False">
+            <Ellipse Width="360"
+                     Height="360"
+                     Margin="-140,-110,0,0"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Top"
+                     Fill="{StaticResource AccentGlowBrush}" />
+            <Ellipse Width="320"
+                     Height="320"
+                     Margin="0,-80,-100,0"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Top"
+                     Fill="{StaticResource ActionGlowBrush}" />
+            <Ellipse Width="280"
+                     Height="280"
+                     Margin="0,0,-120,-120"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Bottom"
+                     Fill="{StaticResource AccentGlowBrush}" />
         </Grid>
 
-        <Border Grid.Row="1"
-                Margin="0,16,0,0"
-                Padding="14,12"
-                Background="{StaticResource SurfaceAltBrush}"
-                BorderBrush="{StaticResource CardBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="14">
-            <TextBlock Text="{Binding StatusMessage}"
-                       Foreground="{StaticResource StrongTextBrush}"
-                       TextWrapping="Wrap" />
-        </Border>
+        <Border Margin="12"
+                Style="{StaticResource ShellBorderStyle}">
+            <Grid Margin="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-        <TabControl Grid.Row="2" Margin="0,20,0,0">
+                <Border Grid.Column="0"
+                        Padding="18,16"
+                        Style="{StaticResource CardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <Border Style="{StaticResource PillBorderStyle}"
+                                    Background="{StaticResource AccentSoftBrush}"
+                                    BorderBrush="{StaticResource AccentSoftBrush}"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="桌面工作台"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontWeight="SemiBold" />
+                            </Border>
+
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding AppName}"
+                                       FontSize="24"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="{Binding StatusMessage}"
+                                       FontSize="13"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Border Grid.Row="1"
+                                Margin="0,16,0,0"
+                                Padding="14,12"
+                                Style="{StaticResource InsetCardBorderStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Margin="0,0,12,0">
+                                    <TextBlock Text="当前模式"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding CurrentModeText}"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Button Grid.Column="1"
+                                        Width="92"
+                                        Height="38"
+                                        Content="刷新状态"
+                                        Click="RefreshState_Click"
+                                        Style="{StaticResource SecondaryButtonStyle}" />
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="2" Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Margin="0,0,8,0"
+                                    Padding="14,12"
+                                    Style="{StaticResource InsetCardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="桌面图标"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding DesktopIconStateText}"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    Padding="14,12"
+                                    Style="{StaticResource InsetCardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="任务栏"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding TaskbarStateText}"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="3"
+                                Margin="0,12,0,0"
+                                Padding="14,12"
+                                Style="{StaticResource InsetCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="快捷键"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource MutedTextBrush}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="{Binding HotkeyText}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Grid.Row="4" Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Margin="0,0,8,0"
+                                    Padding="14,12"
+                                    Style="{StaticResource InsetCardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="默认模式"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding DefaultModeText}"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    Padding="14,12"
+                                    Style="{StaticResource InsetCardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="资源概览"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding Modes.Count, StringFormat={}{0} 个模式}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="{Binding SavedLayouts.Count, StringFormat={}{0} 份布局}"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <TabControl Grid.Column="2">
             <TabItem Header="概览">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
@@ -568,46 +685,39 @@
                                                TextWrapping="Wrap" />
                                 </StackPanel>
 
-                                <Grid Grid.Row="3" Margin="0,22,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Button Grid.Column="0"
+                                                                <WrapPanel Grid.Row="3" Margin="0,22,0,0">
+                                    <Button Width="128"
                                             Height="44"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,10"
                                             Content="应用模式"
                                             Click="ApplyMode_Click" />
-                                    <Button Grid.Column="1"
+                                    <Button Width="128"
                                             Height="44"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,10"
                                             Content="保存绑定"
                                             Click="SaveModeLayoutBinding_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="2"
+                                    <Button Width="128"
                                             Height="44"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,10"
                                             Content="设为默认"
                                             Click="SetDefaultMode_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="3"
+                                    <Button Width="128"
                                             Height="44"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,10"
                                             Content="编辑模式"
                                             Click="EditCustomMode_Click"
                                             IsEnabled="{Binding SelectedMode.IsCustom, TargetNullValue=False}"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="4"
+                                    <Button Width="128"
                                             Height="44"
+                                            Margin="0,0,0,10"
                                             Content="删除模式"
                                             Click="DeleteCustomMode_Click"
                                             IsEnabled="{Binding SelectedMode.IsCustom, TargetNullValue=False}"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                </Grid>
+                                </WrapPanel>
 
                                 <Border Grid.Row="4"
                                         Margin="0,20,0,0"
@@ -901,144 +1011,357 @@
                               HorizontalScrollBarVisibility="Disabled"
                               CanContentScroll="True"
                               PanningMode="VerticalOnly">
-                    <Grid Margin="4,18,4,12">
+                    <Grid Margin="4,14,4,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2.4*" />
-                            <ColumnDefinition Width="1.6*" />
+                            <ColumnDefinition Width="1.9*" />
+                            <ColumnDefinition Width="1.1*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
+                        <Border Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="0,0,12,12"
+                                Padding="18"
+                                Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="随机壁纸" FontSize="20" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="从启用的图源里拉取随机图片，并在后台预取下一张，减少下一次点击等待。"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           TextWrapping="Wrap" />
-
-                                <CheckBox Margin="0,18,0,0"
-                                          Content="启动时自动切换壁纸"
-                                          IsChecked="{Binding WallpaperChangeOnStartupEnabled}" />
-                                <TextBlock Margin="24,6,0,0"
-                                           Text="应用启动完成后会自动尝试换一张，保存后生效。"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           TextWrapping="Wrap" />
-
-                                <CheckBox Margin="0,18,0,0"
-                                          Content="定时轮换壁纸"
-                                          IsChecked="{Binding WallpaperAutoRotateEnabled}" />
-                                <Grid Margin="24,8,0,0">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="220" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Margin="0,0,14,0">
+                                        <Border Style="{StaticResource PillBorderStyle}"
+                                                Background="{StaticResource AccentSoftBrush}"
+                                                BorderBrush="{StaticResource AccentSoftBrush}"
+                                                HorizontalAlignment="Left">
+                                            <TextBlock Text="壁纸轮换"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                        <TextBlock Margin="0,12,0,0"
+                                                   Text="图源与轮换"
+                                                   FontSize="20"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="把常用图源、启动切换和定时轮换都收在一处，减少来回找入口。"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1"
+                                            Padding="14,12"
+                                            Style="{StaticResource InsetCardBorderStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="当前状态"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding WallpaperScheduleText}"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding WallpaperSourceSummaryText}"
+                                                       Foreground="{StaticResource StrongTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <Button Margin="0,12,0,0"
+                                                    Height="40"
+                                                    Content="立即切换"
+                                                    Click="ChangeWallpaperNow_Click">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsWallpaperChangeInProgress}" Value="True">
+                                                                <Setter Property="Content" Value="切换中..." />
+                                                                <Setter Property="IsEnabled" Value="False" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Margin="0,0,10,0"
+                                            Padding="14,12"
+                                            Style="{StaticResource InsetCardBorderStyle}">
+                                        <StackPanel>
+                                            <CheckBox Content="启动后自动切换一张壁纸"
+                                                      FontWeight="SemiBold"
+                                                      IsChecked="{Binding WallpaperChangeOnStartupEnabled}" />
+                                            <TextBlock Margin="24,6,0,0"
+                                                       Text="保存后生效，适合把每次开机的桌面状态直接刷新成新图。"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1"
+                                            Padding="14,12"
+                                            Style="{StaticResource InsetCardBorderStyle}">
+                                        <StackPanel>
+                                            <CheckBox Content="启用定时轮换"
+                                                      FontWeight="SemiBold"
+                                                      IsChecked="{Binding WallpaperAutoRotateEnabled}" />
+                                            <TextBlock Margin="24,6,0,0"
+                                                       Text="后台只读取已保存配置，避免编辑中的勾选项直接影响轮换。"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <Grid Margin="0,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="110" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="轮换间隔（分钟）"
+                                                           Foreground="{StaticResource MutedTextBrush}" />
+                                                <TextBox Grid.Column="1"
+                                                         Height="38"
+                                                         Margin="10,0,0,0"
+                                                         VerticalContentAlignment="Center"
+                                                         IsEnabled="{Binding WallpaperAutoRotateEnabled}"
+                                                         Text="{Binding WallpaperRotationIntervalMinutesInput, UpdateSourceTrigger=PropertyChanged}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="0"
+                                Grid.Column="1"
+                                Margin="0,0,0,12"
+                                Padding="18"
+                                Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock
+                                           Text="添加自定义源"
+                                           FontSize="18"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="支持图片直链，或可解析到图片地址的接口。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="56" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock VerticalAlignment="Center"
-                                               Text="轮换间隔（分钟）"
-                                               Foreground="{StaticResource MutedTextBrush}" />
+                                               Text="名称"
+                                               FontWeight="SemiBold" />
                                     <TextBox Grid.Column="1"
-                                             Height="36"
-                                             Margin="12,0,0,0"
+                                             Height="38"
+                                             Margin="10,0,0,0"
                                              VerticalContentAlignment="Center"
-                                             IsEnabled="{Binding WallpaperAutoRotateEnabled}"
-                                             Text="{Binding WallpaperRotationIntervalMinutesInput, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
-                                <TextBlock Margin="24,8,0,0"
-                                           Text="{Binding WallpaperScheduleText}"
-                                           Foreground="{StaticResource StrongTextBrush}"
-                                           TextWrapping="Wrap" />
-                                <TextBlock Margin="24,6,0,0"
-                                           Text="定时轮换基于已保存配置在后台执行，不会被编辑中的未保存勾选项直接影响。"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           TextWrapping="Wrap" />
+                                             Text="{Binding NewWallpaperSourceName, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBlock Margin="0,18,0,0" Text="壁纸源" FontWeight="SemiBold" />
-                                <Border Margin="0,10,0,0"
-                                        Padding="12"
-                                        MaxHeight="320"
+                                    <TextBlock Grid.Row="1"
+                                               Margin="0,12,0,0"
+                                               VerticalAlignment="Center"
+                                               Text="地址"
+                                               FontWeight="SemiBold" />
+                                    <TextBox Grid.Row="1"
+                                             Grid.Column="1"
+                                             Height="38"
+                                             Margin="10,12,0,0"
+                                             VerticalContentAlignment="Center"
+                                             Text="{Binding NewWallpaperSourceUrl, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Width="138"
+                                            Content="添加到图源库"
+                                            Click="AddWallpaperSource_Click" />
+                                    <TextBlock Grid.Column="1"
+                                               Margin="12,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Text="内置源建议停用而不是删除；自定义源保存后会写入本地配置。"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Padding="18"
+                                Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Margin="0,0,12,0">
+                                        <TextBlock Text="图源库"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="内置源建议按需停用；自定义源支持删除，并会跟随本地配置一起保存。"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1"
+                                            Style="{StaticResource PillBorderStyle}"
+                                            Background="{StaticResource SurfaceAltBrush}">
+                                        <TextBlock Text="{Binding WallpaperSourceSummaryText}"
+                                                   Foreground="{StaticResource StrongTextBrush}"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+
+                                <Border Margin="0,14,0,0"
+                                        Padding="10"
                                         Background="{StaticResource SurfaceAltBrush}"
                                         BorderBrush="{StaticResource CardBorderBrush}"
                                         BorderThickness="1"
-                                        CornerRadius="14">
+                                        CornerRadius="18">
                                     <ListBox ItemsSource="{Binding WallpaperSources}"
-                                             BorderThickness="0"
+                                             MaxHeight="190"
                                              Background="Transparent"
+                                             BorderThickness="0"
                                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Padding" Value="0" />
+                                                <Setter Property="Margin" Value="0" />
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Setter Property="BorderThickness" Value="0" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                <Setter Property="Focusable" Value="False" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate DataType="{x:Type viewModels:WallpaperSourceViewModel}">
-                                                <Border Padding="0,8">
-                                                    <StackPanel>
-                                                        <CheckBox Content="{Binding Name}"
-                                                                  FontWeight="SemiBold"
-                                                                  IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <TextBlock Margin="24,4,0,0"
-                                                                   Text="{Binding RequestUrl}"
-                                                                   FontSize="12"
-                                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                                   TextWrapping="Wrap" />
-                                                    </StackPanel>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="14,12"
+                                                        Background="{StaticResource SurfaceBrush}"
+                                                        BorderBrush="{StaticResource CardBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="16">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Margin="0,0,12,0">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <CheckBox Content="{Binding Name}"
+                                                                          FontWeight="SemiBold"
+                                                                          VerticalAlignment="Center"
+                                                                          IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                                <WrapPanel Grid.Column="1"
+                                                                           Margin="12,0,0,0"
+                                                                           VerticalAlignment="Center">
+                                                                    <Border Style="{StaticResource PillBorderStyle}"
+                                                                            Padding="10,4"
+                                                                            Background="{StaticResource SurfaceAltBrush}">
+                                                                        <TextBlock Text="{Binding SourceTypeText}"
+                                                                                   FontSize="12"
+                                                                                   FontWeight="SemiBold"
+                                                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                                                    </Border>
+                                                                    <Border Margin="8,0,0,0"
+                                                                            Padding="10,4"
+                                                                            BorderThickness="1"
+                                                                            CornerRadius="999">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                                                                                <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Enabled}" Value="True">
+                                                                                        <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                                                                        <Setter Property="BorderBrush" Value="{StaticResource AccentSoftStrongBrush}" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <TextBlock Text="{Binding EnabledText}"
+                                                                                   FontSize="12"
+                                                                                   FontWeight="SemiBold"
+                                                                                   Foreground="{StaticResource StrongTextBrush}" />
+                                                                    </Border>
+                                                                </WrapPanel>
+                                                            </Grid>
+
+                                                            <TextBlock Margin="24,8,0,0"
+                                                                       Text="{Binding RequestUrl}"
+                                                                       FontSize="12"
+                                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                        </StackPanel>
+
+                                                        <Button Grid.Column="1"
+                                                                Width="74"
+                                                                Height="34"
+                                                                Content="删除"
+                                                                VerticalAlignment="Top"
+                                                                Click="DeleteWallpaperSource_Click"
+                                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                                Visibility="{Binding CanDelete, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                    </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
                                 </Border>
 
-                                <WrapPanel Margin="0,18,0,0">
-                                    <Button Width="120" Height="42" Content="立即切换" Click="ChangeWallpaperNow_Click">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsWallpaperChangeInProgress}" Value="True">
-                                                        <Setter Property="Content" Value="切换中..." />
-                                                        <Setter Property="IsEnabled" Value="False" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="轮换会优先使用已保存且启用的图源，切换成功后继续预取下一张以减少等待。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <WrapPanel Margin="0,14,0,0">
                                     <Button Width="132"
-                                            Height="42"
-                                            Margin="12,0,0,0"
+                                            Margin="0,0,10,10"
                                             Content="保存壁纸设置"
                                             Click="SaveWallpaperSettings_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Width="132"
-                                            Height="42"
-                                            Margin="12,0,0,0"
+                                    <Button Width="116"
+                                            Margin="0,0,10,10"
                                             Content="重新加载"
                                             Click="ReloadWallpaperSettings_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Width="120"
-                                            Height="42"
-                                            Margin="12,0,0,0"
+                                    <Button Width="116"
+                                            Margin="0,0,10,10"
                                             Content="全部启用"
                                             Click="EnableAllWallpaperSources_Click"
                                             Style="{StaticResource SecondaryButtonStyle}" />
                                 </WrapPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="响应优化" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,10,0,0"
-                                           Text="当前会优先使用后台预取缓存，下一次手动切换通常会更快。"
-                                           Foreground="{StaticResource MutedTextBrush}"
-                                           TextWrapping="Wrap" />
-
-                                <Border Margin="0,18,0,0"
-                                        Padding="16"
-                                        Background="{StaticResource SurfaceAltBrush}"
-                                        CornerRadius="14">
-                                    <StackPanel>
-                                        <TextBlock Text="当前策略" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,10,0,0" Text="• 图源按优先级尝试，不再随机走慢源" />
-                                        <TextBlock Margin="0,8,0,0" Text="• 切换成功后后台预取下一张" />
-                                        <TextBlock Margin="0,8,0,0" Text="• 网络超时已缩短，失败源更快跳过" />
-                                        <TextBlock Margin="0,8,0,0" Text="• 图片先缓存到本机，再交给系统设置壁纸" />
-                                        <TextBlock Margin="0,8,0,0" Text="• 支持保存后按分钟间隔自动轮换壁纸" />
-                                    </StackPanel>
-                                </Border>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -1161,6 +1484,10 @@
                     </Grid>
                 </ScrollViewer>
             </TabItem>
-        </TabControl>
+                </TabControl>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
+
+
