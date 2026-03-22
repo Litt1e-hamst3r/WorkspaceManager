@@ -49,6 +49,7 @@ public sealed class MainWindowViewDataBuilder
                 Id = source.Id,
                 Name = source.Name,
                 RequestUrl = source.RequestUrl,
+                Kind = source.Kind,
                 IsBuiltIn = builtInIds.Contains(source.Id),
                 Enabled = source.Enabled
             })

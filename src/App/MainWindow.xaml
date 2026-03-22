@@ -1151,7 +1151,7 @@
                                            FontSize="18"
                                            FontWeight="SemiBold" />
                                 <TextBlock Margin="0,6,0,0"
-                                           Text="支持图片直链，或可解析到图片地址的接口。"
+                                           Text="支持在线图片地址，也支持直接选择本地 JPG、PNG、BMP、GIF、WEBP 图片。"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
 
@@ -1177,7 +1177,7 @@
                                     <TextBlock Grid.Row="1"
                                                Margin="0,12,0,0"
                                                VerticalAlignment="Center"
-                                               Text="地址"
+                                               Text="地址/路径"
                                                FontWeight="SemiBold" />
                                     <TextBox Grid.Row="1"
                                              Grid.Column="1"
@@ -1190,16 +1190,23 @@
                                 <Grid Margin="0,14,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <Button Width="138"
                                             Content="添加到图源库"
                                             Click="AddWallpaperSource_Click" />
-                                    <TextBlock Grid.Column="1"
+                                    <Button Grid.Column="1"
+                                            Width="118"
+                                            Margin="10,0,0,0"
+                                            Content="选择本地图片"
+                                            Click="SelectLocalWallpaperFile_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                    <TextBlock Grid.Column="2"
                                                Margin="12,0,0,0"
                                                VerticalAlignment="Center"
-                                               Text="内置源建议停用而不是删除；自定义源保存后会写入本地配置。"
+                                               Text="内置源建议停用而不是删除；选择本地图片后会自动填入路径，保存后可参与手动和定时轮换。"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                TextWrapping="Wrap" />
                                 </Grid>
@@ -1222,7 +1229,7 @@
                                                    FontSize="18"
                                                    FontWeight="SemiBold" />
                                         <TextBlock Margin="0,6,0,0"
-                                                   Text="内置源建议按需停用；自定义源支持删除，并会跟随本地配置一起保存。"
+                                                   Text="内置源建议按需停用；自定义接口和本地图片都支持删除，并会跟随本地配置一起保存。"
                                                    Foreground="{StaticResource MutedTextBrush}"
                                                    TextWrapping="Wrap" />
                                     </StackPanel>

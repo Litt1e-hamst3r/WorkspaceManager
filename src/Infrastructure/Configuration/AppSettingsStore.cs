@@ -95,6 +95,7 @@ public sealed class AppSettingsStore
                     Id = defaultSource.Id,
                     Name = defaultSource.Name,
                     RequestUrl = defaultSource.RequestUrl,
+                    Kind = WallpaperSourceKind.RemoteUrl,
                     Enabled = savedSource.Enabled
                 };
             })
@@ -104,19 +105,26 @@ public sealed class AppSettingsStore
             .Where(source => !string.IsNullOrWhiteSpace(source.Id))
             .Where(source => !builtInIds.Contains(source.Id))
             .Where(source => !string.IsNullOrWhiteSpace(source.Name))
-            .Where(source => Uri.TryCreate(source.RequestUrl, UriKind.Absolute, out _))
             .GroupBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
             .Select(group =>
             {
                 var source = group.Last();
+                if (!WallpaperSourceSetting.TryNormalizeLocation(source.RequestUrl, source.Kind, out var normalizedLocation))
+                {
+                    return null;
+                }
+
                 return new WallpaperSourceSetting
                 {
                     Id = source.Id,
                     Name = source.Name.Trim(),
-                    RequestUrl = source.RequestUrl.Trim(),
+                    RequestUrl = normalizedLocation,
+                    Kind = source.Kind,
                     Enabled = source.Enabled
                 };
-            });
+            })
+            .Where(source => source is not null)
+            .Select(source => source!);
 
         mergedSources.AddRange(customSources);
         return mergedSources;

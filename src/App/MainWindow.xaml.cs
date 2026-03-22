@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using WorkspaceManager.Application.Layouts;
 using WorkspaceManager.Application.Modes;
 using WorkspaceManager.Application.Wallpapers;
@@ -293,40 +294,54 @@ public partial class MainWindow : System.Windows.Window
     {
         try
         {
-            var sourceName = _viewModel.NewWallpaperSourceName.Trim();
-            var requestUrl = _viewModel.NewWallpaperSourceUrl.Trim();
-            if (string.IsNullOrWhiteSpace(sourceName))
-            {
-                throw new InvalidOperationException("请输入图源名称。");
-            }
-
-            if (!Uri.TryCreate(requestUrl, UriKind.Absolute, out var requestUri)
-                || (requestUri.Scheme != Uri.UriSchemeHttp && requestUri.Scheme != Uri.UriSchemeHttps))
-            {
-                throw new InvalidOperationException("请输入有效的 http 或 https 地址。");
-            }
-
-            var normalizedRequestUrl = requestUri.AbsoluteUri.TrimEnd('/');
-            if (_viewModel.WallpaperSources.Any(source =>
-                    string.Equals(source.RequestUrl.Trim().TrimEnd('/'), normalizedRequestUrl, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvalidOperationException("这个地址已经在图源列表里了。");
-            }
-
-            _viewModel.WallpaperSources.Add(new WallpaperSourceViewModel
-            {
-                Id = $"custom-{Guid.NewGuid():N}",
-                Name = sourceName,
-                RequestUrl = requestUri.AbsoluteUri,
-                Enabled = true,
-                IsBuiltIn = false
-            });
+            var source = BuildWallpaperSourceFromDraft();
+            _viewModel.WallpaperSources.Add(source);
             _viewModel.ClearWallpaperSourceDraft();
-            _viewModel.SetStatus($"已添加自定义壁纸源“{sourceName}”，记得保存设置。");
+            _viewModel.SetStatus(
+                source.Kind == WallpaperSourceKind.LocalFile
+                    ? $"已添加本地图片“{source.Name}”，记得保存设置。"
+                    : $"已添加自定义壁纸源“{source.Name}”，记得保存设置。");
         }
         catch (Exception ex)
         {
             _viewModel.SetStatus($"添加壁纸源失败：{ex.Message}");
+        }
+    }
+
+    private void SelectLocalWallpaperFile_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "选择本地壁纸图片",
+                Filter = "图片文件|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp",
+                CheckFileExists = true,
+                CheckPathExists = true,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            if (!WallpaperSourceSetting.TryNormalizeLocalFilePath(dialog.FileName, out var normalizedPath))
+            {
+                throw new InvalidOperationException("当前选择的文件不是受支持的本地图片。");
+            }
+
+            _viewModel.NewWallpaperSourceUrl = normalizedPath;
+            if (string.IsNullOrWhiteSpace(_viewModel.NewWallpaperSourceName))
+            {
+                _viewModel.NewWallpaperSourceName = Path.GetFileNameWithoutExtension(normalizedPath);
+            }
+
+            _viewModel.SetStatus("已选中本地图片，点击“添加到图源库”后即可参与壁纸切换。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"选择本地图片失败：{ex.Message}");
         }
     }
 
@@ -357,6 +372,72 @@ public partial class MainWindow : System.Windows.Window
 
         _viewModel.WallpaperSources.Remove(source);
         _viewModel.SetStatus($"已删除自定义壁纸源“{source.Name}”，记得保存设置。");
+    }
+
+    private WallpaperSourceViewModel BuildWallpaperSourceFromDraft()
+    {
+        var sourceName = _viewModel.NewWallpaperSourceName.Trim();
+        var location = _viewModel.NewWallpaperSourceUrl.Trim();
+        if (string.IsNullOrWhiteSpace(location))
+        {
+            throw new InvalidOperationException("请输入图源地址，或选择一张本地图片。");
+        }
+
+        if (WallpaperSourceSetting.TryNormalizeRemoteUrl(location, out var normalizedRemoteUrl))
+        {
+            if (string.IsNullOrWhiteSpace(sourceName))
+            {
+                throw new InvalidOperationException("请输入图源名称。");
+            }
+
+            EnsureUniqueWallpaperSource(WallpaperSourceKind.RemoteUrl, normalizedRemoteUrl, "这个地址已经在图源列表里了。");
+            return new WallpaperSourceViewModel
+            {
+                Id = $"custom-{Guid.NewGuid():N}",
+                Name = sourceName,
+                RequestUrl = normalizedRemoteUrl,
+                Kind = WallpaperSourceKind.RemoteUrl,
+                Enabled = true,
+                IsBuiltIn = false
+            };
+        }
+
+        if (WallpaperSourceSetting.TryNormalizeLocalFilePath(location, out var normalizedLocalPath))
+        {
+            if (!File.Exists(normalizedLocalPath))
+            {
+                throw new InvalidOperationException("选择的本地图片不存在。");
+            }
+
+            var resolvedName = string.IsNullOrWhiteSpace(sourceName)
+                ? Path.GetFileNameWithoutExtension(normalizedLocalPath)
+                : sourceName;
+            EnsureUniqueWallpaperSource(WallpaperSourceKind.LocalFile, normalizedLocalPath, "这张本地图片已经在图源列表里了。");
+            return new WallpaperSourceViewModel
+            {
+                Id = $"local-{Guid.NewGuid():N}",
+                Name = resolvedName,
+                RequestUrl = normalizedLocalPath,
+                Kind = WallpaperSourceKind.LocalFile,
+                Enabled = true,
+                IsBuiltIn = false
+            };
+        }
+
+        throw new InvalidOperationException("请输入有效的 http/https 地址，或选择 JPG、PNG、BMP、GIF、WEBP 格式的本地图片。");
+    }
+
+    private void EnsureUniqueWallpaperSource(WallpaperSourceKind kind, string normalizedLocation, string errorMessage)
+    {
+        var exists = _viewModel.WallpaperSources.Any(source =>
+            source.Kind == kind
+            && WallpaperSourceSetting.TryNormalizeLocation(source.RequestUrl, source.Kind, out var existingLocation)
+            && string.Equals(existingLocation, normalizedLocation, StringComparison.OrdinalIgnoreCase));
+
+        if (exists)
+        {
+            throw new InvalidOperationException(errorMessage);
+        }
     }
 
     private async Task ChangeWallpaperAsync(bool isStartup, bool isScheduled = false)
@@ -419,6 +500,7 @@ public partial class MainWindow : System.Windows.Window
                 Id = source.Id,
                 Name = source.Name.Trim(),
                 RequestUrl = source.RequestUrl.Trim(),
+                Kind = source.Kind,
                 Enabled = source.Enabled
             })
             .ToList();
@@ -432,6 +514,7 @@ public partial class MainWindow : System.Windows.Window
                 Id = source.Id,
                 Name = source.Name,
                 RequestUrl = source.RequestUrl,
+                Kind = source.Kind,
                 Enabled = source.Enabled
             })
             .ToList();
@@ -484,7 +567,20 @@ public partial class MainWindow : System.Windows.Window
 
     private static bool HasEnabledWallpaperSource(IReadOnlyCollection<WallpaperSourceSetting> sources)
     {
-        return sources.Any(source => source.Enabled);
+        return sources.Any(source =>
+        {
+            if (!source.Enabled)
+            {
+                return false;
+            }
+
+            return source.Kind switch
+            {
+                WallpaperSourceKind.LocalFile => WallpaperSourceSetting.TryNormalizeLocalFilePath(source.RequestUrl, out var localPath)
+                    && File.Exists(localPath),
+                _ => WallpaperSourceSetting.TryNormalizeRemoteUrl(source.RequestUrl, out _)
+            };
+        });
     }
 
     private void SaveWallpaperSettings_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -531,6 +627,7 @@ public partial class MainWindow : System.Windows.Window
                 Id = source.Id,
                 Name = source.Name,
                 RequestUrl = source.RequestUrl,
+                Kind = source.Kind,
                 Enabled = source.Enabled
             })
             .ToList();
@@ -855,6 +952,7 @@ public partial class MainWindow : System.Windows.Window
                 Id = source.Id,
                 Name = source.Name,
                 RequestUrl = source.RequestUrl,
+                Kind = source.Kind,
                 Enabled = source.Enabled
             })
             .ToList();

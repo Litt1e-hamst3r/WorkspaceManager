@@ -138,9 +138,7 @@ public sealed class WallpaperRotationService
         {
             try
             {
-                var downloadedImage = await DownloadResolvedImageAsync(source.RequestUrl, cancellationToken);
-                var savedPath = _wallpaperImageStore.Save(downloadedImage.Content, downloadedImage.Extension);
-                return new PreparedWallpaper(source.Id, source.Name, savedPath);
+                return await PrepareWallpaperFromSourceAsync(source, cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -156,6 +154,30 @@ public sealed class WallpaperRotationService
             failures.Count == 0
                 ? "所有壁纸源都不可用。"
                 : $"所有壁纸源都不可用。{failures[0]}");
+    }
+
+    private async Task<PreparedWallpaper> PrepareWallpaperFromSourceAsync(
+        WallpaperSourceSetting source,
+        CancellationToken cancellationToken)
+    {
+        if (source.Kind == WallpaperSourceKind.LocalFile)
+        {
+            if (!WallpaperSourceSetting.TryNormalizeLocalFilePath(source.RequestUrl, out var localPath))
+            {
+                throw new InvalidOperationException("本地图片路径无效。");
+            }
+
+            if (!File.Exists(localPath))
+            {
+                throw new FileNotFoundException("本地图片不存在。", localPath);
+            }
+
+            return new PreparedWallpaper(source.Id, source.Name, localPath);
+        }
+
+        var downloadedImage = await DownloadResolvedImageAsync(source.RequestUrl, cancellationToken);
+        var savedPath = _wallpaperImageStore.Save(downloadedImage.Content, downloadedImage.Extension);
+        return new PreparedWallpaper(source.Id, source.Name, savedPath);
     }
 
     private async Task<DownloadedImage> DownloadResolvedImageAsync(string requestUrl, CancellationToken cancellationToken)
@@ -210,14 +232,30 @@ public sealed class WallpaperRotationService
     private static List<WallpaperSourceSetting> NormalizeSources(IEnumerable<WallpaperSourceSetting> sources)
     {
         return sources
-            .Where(source => source.Enabled && Uri.TryCreate(source.RequestUrl, UriKind.Absolute, out _))
-            .Select(source => new WallpaperSourceSetting
+            .Where(source => source.Enabled)
+            .Select(source =>
             {
-                Id = source.Id,
-                Name = source.Name,
-                RequestUrl = source.RequestUrl,
-                Enabled = source.Enabled
+                if (!WallpaperSourceSetting.TryNormalizeLocation(source.RequestUrl, source.Kind, out var normalizedLocation))
+                {
+                    return null;
+                }
+
+                if (source.Kind == WallpaperSourceKind.LocalFile && !File.Exists(normalizedLocation))
+                {
+                    return null;
+                }
+
+                return new WallpaperSourceSetting
+                {
+                    Id = source.Id,
+                    Name = source.Name,
+                    RequestUrl = normalizedLocation,
+                    Kind = source.Kind,
+                    Enabled = source.Enabled
+                };
             })
+            .Where(source => source is not null)
+            .Select(source => source!)
             .ToList();
     }
 
@@ -225,7 +263,7 @@ public sealed class WallpaperRotationService
     {
         return string.Join(
             '|',
-            sources.Select(source => $"{source.Id}:{source.RequestUrl}:{source.Enabled}"));
+            sources.Select(source => $"{source.Id}:{source.Kind}:{source.RequestUrl}:{source.Enabled}"));
     }
 
     private void ResetPrefetchStateIfNeededLocked(string sourceKey)

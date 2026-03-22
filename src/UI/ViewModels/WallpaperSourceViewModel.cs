@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using WorkspaceManager.Infrastructure.Configuration;
 
 namespace WorkspaceManager.UI.ViewModels;
 
@@ -13,11 +14,17 @@ public sealed class WallpaperSourceViewModel : INotifyPropertyChanged
 
     public string RequestUrl { get; set; } = string.Empty;
 
+    public WallpaperSourceKind Kind { get; set; } = WallpaperSourceKind.RemoteUrl;
+
     public bool IsBuiltIn { get; set; }
 
     public bool CanDelete => !IsBuiltIn;
 
-    public string SourceTypeText => IsBuiltIn ? "内置源" : "自定义";
+    public string SourceTypeText => IsBuiltIn
+        ? "内置源"
+        : Kind == WallpaperSourceKind.LocalFile
+            ? "本地图片"
+            : "自定义接口";
 
     public string EnabledText => Enabled ? "已启用" : "已停用";
 

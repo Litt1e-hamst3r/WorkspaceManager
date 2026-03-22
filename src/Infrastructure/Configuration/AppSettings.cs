@@ -44,6 +44,7 @@ public sealed class AppSettings
                 Id = "alcy-pc",
                 Name = "Alcy PC",
                 RequestUrl = "https://t.alcy.cc/pc",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -51,6 +52,7 @@ public sealed class AppSettings
                 Id = "loliapi-pc",
                 Name = "LoliAPI 横图",
                 RequestUrl = "https://www.loliapi.com/acg/pc/",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -58,6 +60,7 @@ public sealed class AppSettings
                 Id = "yppp",
                 Name = "YPPP 随机图",
                 RequestUrl = "https://api.yppp.net/api.php",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -65,6 +68,7 @@ public sealed class AppSettings
                 Id = "mtyqx-random",
                 Name = "MTYQX 随机图",
                 RequestUrl = "https://api.mtyqx.cn/api/random.php",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -72,6 +76,7 @@ public sealed class AppSettings
                 Id = "alcy-moe",
                 Name = "Alcy Moe",
                 RequestUrl = "https://t.alcy.cc/moe",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -79,6 +84,7 @@ public sealed class AppSettings
                 Id = "tomys-acgimg",
                 Name = "Tomys ACG",
                 RequestUrl = "https://api.tomys.top/api/acgimg",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -86,6 +92,7 @@ public sealed class AppSettings
                 Id = "zichen-acg",
                 Name = "Zichen ACG",
                 RequestUrl = "https://app.zichen.zone/api/acg/api.php",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             },
             new()
@@ -93,6 +100,7 @@ public sealed class AppSettings
                 Id = "lolicon-setu",
                 Name = "Lolicon Setu",
                 RequestUrl = "https://api.lolicon.app/setu/v2",
+                Kind = WallpaperSourceKind.RemoteUrl,
                 Enabled = true
             }
         ];
