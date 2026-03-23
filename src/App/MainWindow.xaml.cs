@@ -130,6 +130,50 @@ public partial class MainWindow : System.Windows.Window
         _viewModel.SetStatus(message);
     }
 
+    public Task ToggleDesktopIconsFromShellAsync()
+    {
+        return Dispatcher.InvokeAsync(async () => await ToggleDesktopIconsAsync()).Task.Unwrap();
+    }
+
+    public Task ToggleTaskbarFromShellAsync()
+    {
+        return Dispatcher.InvokeAsync(async () =>
+        {
+            await _taskbarService.ToggleAsync();
+            RefreshTaskbarState();
+            _viewModel.SetStatus("任务栏状态已切换。");
+        }).Task.Unwrap();
+    }
+
+    public Task ChangeWallpaperFromShellAsync()
+    {
+        return Dispatcher.InvokeAsync(async () => await ChangeWallpaperAsync(false)).Task.Unwrap();
+    }
+
+    public void SaveFavoriteWallpaperFromShell()
+    {
+        Dispatcher.Invoke(SaveFavoriteWallpaperCore);
+    }
+
+    public Task ApplyDefaultModeFromShellAsync()
+    {
+        return Dispatcher.InvokeAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(_appSettings.DefaultModeId))
+            {
+                _viewModel.SetStatus("请先在设置中配置默认模式。");
+                return;
+            }
+
+            await ApplyModeAsync(_appSettings.DefaultModeId, "已应用默认模式“{0}”。");
+        }).Task.Unwrap();
+    }
+
+    public void HideWindowToTrayFromShell(string message = "已收起主窗口，可通过托盘或快捷键恢复。")
+    {
+        Dispatcher.Invoke(() => HideToTray(message));
+    }
+
     public void RequestExit()
     {
         _allowClose = true;
@@ -253,6 +297,7 @@ public partial class MainWindow : System.Windows.Window
         RefreshDesktopIconState();
         RefreshTaskbarState();
         _viewModel.RefreshWallpaperSourceStates();
+        _viewModel.SetStatus("桌面、任务栏与壁纸状态已刷新。");
     }
 
     private async void ToggleTaskbar_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -286,6 +331,11 @@ public partial class MainWindow : System.Windows.Window
 
     private void SaveFavoriteWallpaper_Click(object sender, System.Windows.RoutedEventArgs e)
     {
+        SaveFavoriteWallpaperCore();
+    }
+
+    private void SaveFavoriteWallpaperCore()
+    {
         if (_isWallpaperChangeInProgress)
         {
             _viewModel.SetStatus("壁纸切换完成后再收藏。");
@@ -304,6 +354,16 @@ public partial class MainWindow : System.Windows.Window
         {
             _viewModel.SetStatus($"收藏当前壁纸失败：{ex.Message}");
         }
+    }
+
+    private async void ApplyDefaultModeQuickAction_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        await ApplyDefaultModeFromShellAsync();
+    }
+
+    private void HideWindowToTrayQuickAction_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        HideToTray("已从快捷操作收起主窗口，可通过托盘或快捷键恢复。");
     }
 
     private void EnableAllWallpaperSources_Click(object sender, System.Windows.RoutedEventArgs e)

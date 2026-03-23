@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
 using WorkspaceManager.App;
-using WorkspaceManager.Interop.Desktop;
 
 namespace WorkspaceManager.UI.Shell;
 
@@ -13,8 +12,6 @@ public sealed class TrayIconHost : IDisposable
 {
     private static readonly Uri AppLogoUri = new("pack://application:,,,/Assets/logol.png", UriKind.Absolute);
     private readonly MainWindow _mainWindow;
-    private readonly DesktopIconService _desktopIconService;
-    private readonly TaskbarService _taskbarService;
     private NotifyIcon? _notifyIcon;
     private Icon? _customTrayIcon;
     private bool _hasShownTrayHint;
@@ -22,19 +19,24 @@ public sealed class TrayIconHost : IDisposable
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(nint iconHandle);
 
-    public TrayIconHost(MainWindow mainWindow, DesktopIconService desktopIconService, TaskbarService taskbarService)
+    public TrayIconHost(MainWindow mainWindow)
     {
         _mainWindow = mainWindow;
-        _desktopIconService = desktopIconService;
-        _taskbarService = taskbarService;
     }
 
     public void Initialize()
     {
         var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("显示主窗口", null, (_, _) => ShowMainWindow());
+        contextMenu.Items.Add("收起到托盘", null, (_, _) => HideMainWindow());
+        contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add("切换桌面图标", null, async (_, _) => await ToggleDesktopIconsAsync());
         contextMenu.Items.Add("切换任务栏", null, async (_, _) => await ToggleTaskbarAsync());
-        contextMenu.Items.Add("显示主窗口", null, (_, _) => ShowMainWindow());
+        contextMenu.Items.Add(new ToolStripSeparator());
+        contextMenu.Items.Add("下一张壁纸", null, async (_, _) => await ChangeWallpaperAsync());
+        contextMenu.Items.Add("收藏当前壁纸", null, (_, _) => SaveFavoriteWallpaper());
+        contextMenu.Items.Add("应用默认模式", null, async (_, _) => await ApplyDefaultModeAsync());
+        contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add("退出", null, (_, _) => ExitApplication());
         _customTrayIcon = CreateTrayIcon();
 
@@ -48,7 +50,7 @@ public sealed class TrayIconHost : IDisposable
 
         _notifyIcon.DoubleClick += (_, _) => ShowMainWindow();
 
-        ShowTrayHint("应用已启动，可最小化或关闭到托盘继续运行。");
+        ShowTrayHint("应用已启动，可通过托盘直接切换桌面、任务栏和壁纸。");
     }
 
     public void Dispose()
@@ -71,8 +73,7 @@ public sealed class TrayIconHost : IDisposable
     {
         try
         {
-            await _desktopIconService.ToggleAsync();
-            _mainWindow.Dispatcher.Invoke(_mainWindow.RefreshDesktopIconState);
+            await _mainWindow.ToggleDesktopIconsFromShellAsync();
         }
         catch (Exception ex)
         {
@@ -89,17 +90,69 @@ public sealed class TrayIconHost : IDisposable
         _mainWindow.ShowFromTray();
     }
 
+    private void HideMainWindow()
+    {
+        _mainWindow.HideWindowToTrayFromShell("已从托盘收起主窗口，可通过托盘或快捷键恢复。");
+    }
+
     private async Task ToggleTaskbarAsync()
     {
         try
         {
-            await _taskbarService.ToggleAsync();
-            _mainWindow.Dispatcher.Invoke(_mainWindow.RefreshTaskbarState);
+            await _mainWindow.ToggleTaskbarFromShellAsync();
         }
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(
                 $"切换任务栏失败：{ex.Message}",
+                "Workspace Manager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }
+
+    private async Task ChangeWallpaperAsync()
+    {
+        try
+        {
+            await _mainWindow.ChangeWallpaperFromShellAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"切换壁纸失败：{ex.Message}",
+                "Workspace Manager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }
+
+    private void SaveFavoriteWallpaper()
+    {
+        try
+        {
+            _mainWindow.SaveFavoriteWallpaperFromShell();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"收藏壁纸失败：{ex.Message}",
+                "Workspace Manager",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }
+
+    private async Task ApplyDefaultModeAsync()
+    {
+        try
+        {
+            await _mainWindow.ApplyDefaultModeFromShellAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"应用默认模式失败：{ex.Message}",
                 "Workspace Manager",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);

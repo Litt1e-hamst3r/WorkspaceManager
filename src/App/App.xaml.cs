@@ -102,7 +102,7 @@ public partial class App : System.Windows.Application
         _showMainWindowHotkeyService = new GlobalHotkeyService(_settings.ShowMainWindowHotkey);
         mainWindow.AttachHotkeyServices(_desktopToggleHotkeyService, _showMainWindowHotkeyService);
 
-        _trayIconHost = new TrayIconHost(mainWindow, DesktopIconService, _taskbarService);
+        _trayIconHost = new TrayIconHost(mainWindow);
         _trayIconHost.Initialize();
         _desktopLayoutProtectionService.Start();
 

@@ -482,7 +482,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         IsDesktopIconsVisible = isVisible;
         DesktopIconStateText = $"桌面图标状态：{(isVisible ? "显示中" : "已隐藏")}";
-        StatusMessage = "托盘与桌面图标切换原型已可用。";
     }
 
     public void SetStatus(string message)

@@ -233,24 +233,51 @@
                             <ColumnDefinition Width="2*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,12,0">
+                        <Border Grid.Column="0" Style="{StaticResource HeroCardBorderStyle}" Margin="0,0,12,0">
                             <StackPanel>
                                 <Border Style="{StaticResource PillBorderStyle}"
                                         Background="{StaticResource AccentSoftBrush}"
                                         BorderBrush="{StaticResource AccentSoftBrush}"
                                         HorizontalAlignment="Left">
-                                    <TextBlock Text="工作区状态"
+                                    <TextBlock Text="快捷工作台"
                                                Foreground="{StaticResource AccentBrush}"
                                                FontWeight="SemiBold" />
                                 </Border>
                                 <TextBlock Margin="0,16,0,0"
-                                           Text="当前桌面控制入口"
+                                           Text="高频动作现在集中在首页"
                                            FontSize="24"
                                            FontWeight="SemiBold" />
                                 <TextBlock Margin="0,10,0,0"
-                                           Text="图标、任务栏、托盘与快捷键都集中在这里，日常切换会更直接。"
+                                           Text="先收桌面，再换壁纸，最后切回默认模式。常用动作不再需要在几个页签之间来回找。"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
+
+                                <WrapPanel Margin="0,18,0,0">
+                                    <Border Margin="0,0,8,8"
+                                            Style="{StaticResource PillBorderStyle}"
+                                            Background="{StaticResource SurfaceBrush}">
+                                        <TextBlock Text="{Binding DesktopIconStateText}"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                    <Border Margin="0,0,8,8"
+                                            Style="{StaticResource PillBorderStyle}"
+                                            Background="{StaticResource SurfaceBrush}">
+                                        <TextBlock Text="{Binding TaskbarStateText}"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                    <Border Margin="0,0,8,8"
+                                            Style="{StaticResource PillBorderStyle}"
+                                            Background="{StaticResource SurfaceBrush}">
+                                        <TextBlock Text="{Binding WallpaperScheduleText}"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                    <Border Margin="0,0,8,8"
+                                            Style="{StaticResource PillBorderStyle}"
+                                            Background="{StaticResource SurfaceBrush}">
+                                        <TextBlock Text="{Binding WallpaperSourceSummaryText}"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                </WrapPanel>
 
                                 <Grid Margin="0,20,0,0">
                                     <Grid.ColumnDefinitions>
@@ -360,33 +387,129 @@
                                             Style="{StaticResource SecondaryButtonStyle}" />
                                 </Grid>
 
-                                <Border Margin="0,22,0,0"
-                                        Padding="16"
-                                        Background="{StaticResource SurfaceAltBrush}"
-                                        CornerRadius="14">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
+                                <TextBlock Margin="0,22,0,0"
+                                           Text="一键动作"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource MutedTextBrush}" />
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
 
-                                        <StackPanel>
-                                            <TextBlock Text="桌面图标" FontWeight="SemiBold" />
-                                            <TextBlock Margin="0,8,0,0"
-                                                       Text="{Binding DesktopIconStateText}"
+                                    <Button Grid.Row="0"
+                                            Grid.Column="0"
+                                            Margin="0,0,10,10"
+                                            Click="ToggleDesktopIcons_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="切换桌面图标"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
                                                        Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="录屏或分享前先收干净桌面"
+                                                       TextAlignment="Center"
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
+                                    </Button>
 
-                                        <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                                            <TextBlock Text="任务栏" FontWeight="SemiBold" />
-                                            <TextBlock Margin="0,8,0,0"
-                                                       Text="{Binding TaskbarStateText}"
+                                    <Button Grid.Row="0"
+                                            Grid.Column="1"
+                                            Margin="0,0,10,10"
+                                            Click="ToggleTaskbar_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="切换任务栏"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
                                                        Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="临时进入更纯净的桌面视图"
+                                                       TextAlignment="Center"
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
-                                    </Grid>
-                                </Border>
+                                    </Button>
+
+                                    <Button Grid.Row="0"
+                                            Grid.Column="2"
+                                            Margin="0,0,0,10"
+                                            Click="ApplyDefaultModeQuickAction_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="应用默认模式"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="快速回到你最常用的桌面配置"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button Grid.Row="1"
+                                            Grid.Column="0"
+                                            Margin="0,0,10,0"
+                                            Click="ChangeWallpaperNow_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="立即换壁纸"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="下一张图直接上桌面，不用切页"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="0,0,10,0"
+                                            Click="SaveFavoriteWallpaper_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="收藏当前壁纸"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="喜欢就先存下来，稍后再慢慢整理"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button Grid.Row="1"
+                                            Grid.Column="2"
+                                            Click="HideWindowToTrayQuickAction_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}">
+                                        <StackPanel Width="148">
+                                            <TextBlock Text="收起到托盘"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Center" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="保留后台能力，把主界面先藏起来"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
@@ -400,20 +523,34 @@
                                 <StackPanel>
                                     <TextBlock Text="当前状态" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
                                     <TextBlock Margin="0,12,0,0"
-                                               Text="{Binding HotkeyText}"
-                                               FontSize="20"
-                                               FontWeight="SemiBold"
-                                               TextWrapping="Wrap" />
-                                    <TextBlock Margin="0,10,0,0"
-                                               Text="双击托盘图标可恢复窗口，快捷键可快速切换桌面图标。"
-                                               Foreground="{StaticResource MutedTextBrush}"
-                                               TextWrapping="Wrap" />
-                                    <TextBlock Margin="0,12,0,0"
                                                Text="{Binding CurrentModeText}"
+                                               FontSize="20"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap" />
                                     <TextBlock Margin="0,8,0,0"
                                                Text="{Binding DefaultModeText}"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               TextWrapping="Wrap" />
+
+                                    <Border Margin="0,16,0,0"
+                                            Style="{StaticResource InsetCardBorderStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding HotkeyText}"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0"
+                                                       Text="{Binding WallpaperScheduleText}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding WallpaperSourceSummaryText}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Margin="0,14,0,0"
+                                               Text="双击托盘图标或使用主窗口显隐快捷键，都可以把工作台重新拉回来。"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                TextWrapping="Wrap" />
                                 </StackPanel>
@@ -421,11 +558,25 @@
 
                             <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="运行方式" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
-                                    <TextBlock Margin="0,14,0,0" Text="• 最小化自动进入托盘" />
-                                    <TextBlock Margin="0,8,0,0" Text="• 关闭窗口不退出程序" />
-                                    <TextBlock Margin="0,8,0,0" Text="• 任务栏可单独隐藏或恢复" />
-                                    <TextBlock Margin="0,8,0,0" Text="• 支持开机自启与启动最小化" />
+                                    <TextBlock Text="托盘快捷入口" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" />
+                                    <TextBlock Margin="0,12,0,0"
+                                               Text="托盘菜单现在可以直接处理日常动作，不必每次先把主窗口翻出来。"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               TextWrapping="Wrap" />
+
+                                    <Border Margin="0,16,0,0"
+                                            Style="{StaticResource InsetCardBorderStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="• 显示或收起主窗口" />
+                                            <TextBlock Margin="0,8,0,0" Text="• 直接切换桌面图标和任务栏" />
+                                            <TextBlock Margin="0,8,0,0" Text="• 直接换下一张壁纸并收藏当前壁纸" />
+                                            <TextBlock Margin="0,8,0,0" Text="• 直接应用默认模式" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button Margin="0,16,0,0"
+                                            Content="现在收起主窗口"
+                                            Click="HideWindowToTrayQuickAction_Click" />
                                 </StackPanel>
                             </Border>
                         </Grid>
