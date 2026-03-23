@@ -23,6 +23,7 @@ public sealed class MainWindowViewDataBuilder
         viewModel.SetWallpaperChangeOnStartup(settings.WallpaperChangeOnStartup);
         viewModel.SetWallpaperAutoRotateEnabled(settings.WallpaperAutoRotateEnabled);
         viewModel.SetWallpaperRotationIntervalMinutesInput(settings.WallpaperRotationIntervalMinutes.ToString());
+        viewModel.SetWallpaperFavoriteSaveDirectoryInput(settings.FavoriteWallpaperSaveDirectory);
         viewModel.SetWallpaperScheduleText(BuildWallpaperScheduleText(settings));
         viewModel.SetWallpaperSources(BuildWallpaperSources(settings.WallpaperSources));
         viewModel.SetDefaultModeId(string.IsNullOrWhiteSpace(settings.DefaultModeId)

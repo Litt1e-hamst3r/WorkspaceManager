@@ -44,6 +44,7 @@ public partial class App : System.Windows.Application
         _startupRegistrationService = new StartupRegistrationService();
         _desktopLayoutStore = new DesktopLayoutStore();
         _desktopLayoutPreviewService = new DesktopLayoutPreviewService();
+        _settings = _settingsStore.Load();
         var desktopLayoutInteropService = new DesktopLayoutInteropService();
         _displaySettingsWatcher = new DisplaySettingsWatcher();
         _httpClient = new HttpClient(new HttpClientHandler
@@ -54,9 +55,10 @@ public partial class App : System.Windows.Application
             Timeout = TimeSpan.FromSeconds(8)
         };
         _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("WorkspaceManager/0.1");
+        var wallpaperImageStore = new WallpaperImageStore(_settings.FavoriteWallpaperSaveDirectory);
         var wallpaperRotationService = new WallpaperRotationService(
             _httpClient,
-            new WallpaperImageStore(),
+            wallpaperImageStore,
             new DesktopWallpaperService());
         _wallpaperAutoRotationService = new WallpaperAutoRotationService();
         var mainWindowViewDataBuilder = new MainWindowViewDataBuilder(new LayoutPreviewImageLoader());
@@ -65,7 +67,6 @@ public partial class App : System.Windows.Application
         _desktopLayoutService = new DesktopLayoutService(_desktopLayoutStore, _desktopLayoutPreviewService, desktopLayoutInteropService);
         _desktopLayoutProtectionService = new DesktopLayoutProtectionService(_desktopLayoutService, _displaySettingsWatcher, Dispatcher);
         _modeService = new ModeService(_modeStore, DesktopIconService, _taskbarService, _desktopLayoutService);
-        _settings = _settingsStore.Load();
         _settings.LaunchAtStartup = _startupRegistrationService.IsEnabled();
         try
         {

@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace WorkspaceManager.Infrastructure.Configuration;
 
 public sealed class AppSettings
@@ -27,7 +29,24 @@ public sealed class AppSettings
 
     public int WallpaperRotationIntervalMinutes { get; set; } = DefaultWallpaperRotationIntervalMinutes;
 
+    public string FavoriteWallpaperSaveDirectory { get; set; } = GetDefaultWallpaperFavoriteSaveDirectory();
+
     public List<WallpaperSourceSetting> WallpaperSources { get; set; } = CreateDefaultWallpaperSources();
+
+    public static string GetDefaultWallpaperFavoriteSaveDirectory()
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "WorkspaceManager",
+            "wallpaper-favorites");
+    }
+
+    public static string NormalizeFavoriteWallpaperSaveDirectory(string? value)
+    {
+        return WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(value, out var normalizedPath)
+            ? normalizedPath
+            : GetDefaultWallpaperFavoriteSaveDirectory();
+    }
 
     public static bool IsBuiltInWallpaperSourceId(string? id)
     {

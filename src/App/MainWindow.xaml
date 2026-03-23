@@ -1087,21 +1087,35 @@
                                                        Text="{Binding WallpaperSourceSummaryText}"
                                                        Foreground="{StaticResource StrongTextBrush}"
                                                        TextWrapping="Wrap" />
-                                            <Button Margin="0,12,0,0"
-                                                    Height="40"
-                                                    Content="立即切换"
-                                                    Click="ChangeWallpaperNow_Click">
-                                                <Button.Style>
-                                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsWallpaperChangeInProgress}" Value="True">
-                                                                <Setter Property="Content" Value="切换中..." />
-                                                                <Setter Property="IsEnabled" Value="False" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
+                                            <Grid Margin="0,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="8" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0"
+                                                        Height="40"
+                                                        Content="立即切换"
+                                                        Click="ChangeWallpaperNow_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsWallpaperChangeInProgress}" Value="True">
+                                                                    <Setter Property="Content" Value="切换中..." />
+                                                                    <Setter Property="IsEnabled" Value="False" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <Button Grid.Column="2"
+                                                        Height="40"
+                                                        Content="收藏当前"
+                                                        Click="SaveFavoriteWallpaper_Click"
+                                                        Style="{StaticResource SecondaryButtonStyle}" />
+                                            </Grid>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -1423,7 +1437,7 @@
                                 </Border>
 
                                 <TextBlock Margin="0,12,0,0"
-                                           Text="轮换会优先使用已保存且启用的图源，切换成功后继续预取下一张以减少等待。"
+                                           Text="轮换会优先使用已保存且启用的图源，切换成功后继续预取下一张以减少等待；喜欢当前这张时也可以直接收藏到本地。"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
 
@@ -1522,7 +1536,7 @@
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
 
-                                <TextBlock Margin="0,18,0,0" Text="显示主窗口快捷键" FontWeight="SemiBold" />
+                                <TextBlock Margin="0,18,0,0" Text="主窗口显隐快捷键" FontWeight="SemiBold" />
                                 <TextBox Margin="0,8,0,0"
                                          Height="40"
                                          IsReadOnly="True"
@@ -1535,7 +1549,30 @@
                                          Tag="ShowMainWindow"
                                          Text="{Binding ShowMainWindowHotkeyInput, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="当任务栏被隐藏或窗口已缩到托盘时，可用这个快捷键直接拉回主窗口。"
+                                           Text="窗口在前台时按一下可收进托盘，窗口已隐藏或不在前台时按一下可直接拉回主窗口。"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,18,0,0" Text="收藏壁纸保存路径" FontWeight="SemiBold" />
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox Height="40"
+                                             VerticalContentAlignment="Center"
+                                             Text="{Binding WallpaperFavoriteSaveDirectoryInput, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Grid.Column="1"
+                                            Width="96"
+                                            Height="40"
+                                            Margin="10,0,0,0"
+                                            Content="选择文件夹"
+                                            Click="SelectFavoriteWallpaperSaveDirectory_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </Grid>
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="仅影响“收藏当前”的保存位置；留空时会回到默认目录。"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap" />
 

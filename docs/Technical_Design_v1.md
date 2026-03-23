@@ -289,6 +289,7 @@ logs/
 
 ### 7.2 文件职责
 - `appsettings.json`：基础设置、自启动、托盘、默认模式、快捷键、随机壁纸源
+- `wallpaper-favorites/`：用户手动收藏的壁纸文件
 - `modes.json`：预设模式定义、布局绑定、图标/任务栏显隐配置
 - `rules.json`：整理规则定义
 - `layouts/*.json`：布局快照
@@ -324,7 +325,7 @@ logs/
 
 当前 MVP 使用两组全局快捷键：
 - `DesktopToggleHotkey`：切换桌面图标显示/隐藏
-- `ShowMainWindowHotkey`：从托盘或隐藏任务栏状态下恢复主窗口
+- `ShowMainWindowHotkey`：切换主窗口显隐；窗口已隐藏时恢复，窗口已在前台时隐藏到托盘
 
 ## 9. Windows 集成设计
 
@@ -356,6 +357,8 @@ logs/
 - 支持直接使用本地图片文件作为壁纸源，纳入同一套启用、保存、轮换逻辑
 - 支持将本地图片文件夹作为壁纸源，轮换时从目录内可用图片中选择一张并走统一缓存链路
 - 将图片缓存到本地后再调用 Windows 壁纸接口，避免直接依赖远端 URL
+- 支持读取当前系统壁纸路径，并将当前壁纸按去重规则收藏到本地 `wallpaper-favorites/`
+- 收藏目录由 `AppSettings.FavoriteWallpaperSaveDirectory` 持久化，可在设置页中修改
 - 使用后台预取缓存下一张壁纸，降低手动切换等待时间
 - 壁纸源配置跟随 `AppSettings` 持久化，允许禁用不稳定图源
 - 支持在 UI 中手动添加和删除自定义壁纸源；内置图源不可删除，只能停用

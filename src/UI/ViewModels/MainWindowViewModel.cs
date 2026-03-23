@@ -25,6 +25,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _wallpaperAutoRotateEnabled;
     private bool _isWallpaperChangeInProgress;
     private string _wallpaperRotationIntervalMinutesInput = AppSettings.DefaultWallpaperRotationIntervalMinutes.ToString();
+    private string _wallpaperFavoriteSaveDirectoryInput = AppSettings.GetDefaultWallpaperFavoriteSaveDirectory();
     private string _wallpaperScheduleText = "定时轮换：未开启";
     private string _wallpaperSourceSummaryText = "已启用 0/0 · 自定义 0";
     private string _desktopToggleHotkeyInput = AppSettings.DefaultDesktopToggleHotkey;
@@ -314,6 +315,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public string WallpaperFavoriteSaveDirectoryInput
+    {
+        get => _wallpaperFavoriteSaveDirectoryInput;
+        set
+        {
+            if (_wallpaperFavoriteSaveDirectoryInput == value)
+            {
+                return;
+            }
+
+            _wallpaperFavoriteSaveDirectoryInput = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsWallpaperChangeInProgress
     {
         get => _isWallpaperChangeInProgress;
@@ -482,7 +498,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void SetHotkeys(string desktopToggleHotkey, string showMainWindowHotkey)
     {
-        HotkeyText = $"图标 {desktopToggleHotkey} · 主窗口 {showMainWindowHotkey}";
+        HotkeyText = $"图标 {desktopToggleHotkey} · 主窗口显隐 {showMainWindowHotkey}";
     }
 
     public void SetLaunchAtStartup(bool enabled)
@@ -525,6 +541,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void SetWallpaperRotationIntervalMinutesInput(string value)
     {
         WallpaperRotationIntervalMinutesInput = value;
+    }
+
+    public void SetWallpaperFavoriteSaveDirectoryInput(string value)
+    {
+        WallpaperFavoriteSaveDirectoryInput = value;
     }
 
     public void SetWallpaperScheduleText(string value)

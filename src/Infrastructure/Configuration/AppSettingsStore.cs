@@ -61,6 +61,7 @@ public sealed class AppSettingsStore
         settings.WallpaperRotationIntervalMinutes = settings.WallpaperRotationIntervalMinutes is < 1 or > 1440
             ? AppSettings.DefaultWallpaperRotationIntervalMinutes
             : settings.WallpaperRotationIntervalMinutes;
+        settings.FavoriteWallpaperSaveDirectory = AppSettings.NormalizeFavoriteWallpaperSaveDirectory(settings.FavoriteWallpaperSaveDirectory);
         settings.WallpaperSources = MergeWallpaperSources(settings.WallpaperSources);
         return settings;
     }

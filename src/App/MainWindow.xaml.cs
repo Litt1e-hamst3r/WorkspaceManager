@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using WorkspaceManager.Application.Layouts;
 using WorkspaceManager.Application.Modes;
 using WorkspaceManager.Application.Wallpapers;
@@ -32,6 +33,8 @@ public partial class MainWindow : System.Windows.Window
     private string? _currentModeId;
     private bool _allowClose;
     private bool _isWallpaperChangeInProgress;
+    private bool _isTrayVisibilityTransition;
+    private System.Windows.WindowState _lastRestorableWindowState = System.Windows.WindowState.Normal;
 
     public MainWindow(
         DesktopIconService desktopIconService,
@@ -111,9 +114,7 @@ public partial class MainWindow : System.Windows.Window
 
     public void ShowFromTray()
     {
-        Show();
-        WindowState = System.Windows.WindowState.Normal;
-        Activate();
+        RestoreAndActivateWindow();
         RefreshDesktopIconState();
         RefreshTaskbarState();
         _viewModel.SetStatus("已从托盘恢复窗口。");
@@ -121,6 +122,8 @@ public partial class MainWindow : System.Windows.Window
 
     public void HideToTray(string message)
     {
+        PrepareWindowForTrayHide();
+        ShowInTaskbar = false;
         Hide();
         RefreshDesktopIconState();
         RefreshTaskbarState();
@@ -279,6 +282,28 @@ public partial class MainWindow : System.Windows.Window
     private async void ChangeWallpaperNow_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         await ChangeWallpaperAsync(false);
+    }
+
+    private void SaveFavoriteWallpaper_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_isWallpaperChangeInProgress)
+        {
+            _viewModel.SetStatus("壁纸切换完成后再收藏。");
+            return;
+        }
+
+        try
+        {
+            var result = _wallpaperRotationService.SaveCurrentWallpaperToFavorites();
+            var fileName = Path.GetFileName(result.SavedPath);
+            _viewModel.SetStatus(result.AlreadyExists
+                ? $"这张壁纸已经收藏过了：{fileName}，可在“{result.DirectoryPath}”中查看。"
+                : $"已收藏当前壁纸：{fileName}，保存位置：{result.DirectoryPath}");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"收藏当前壁纸失败：{ex.Message}");
+        }
     }
 
     private void EnableAllWallpaperSources_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -589,6 +614,49 @@ public partial class MainWindow : System.Windows.Window
         return normalizedPath;
     }
 
+    private string? SelectDirectory(string description, string? currentPath, bool showNewFolderButton)
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = description,
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = showNewFolderButton
+        };
+
+        if (WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(currentPath, out var normalizedCurrentPath)
+            && Directory.Exists(normalizedCurrentPath))
+        {
+            dialog.InitialDirectory = normalizedCurrentPath;
+        }
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return null;
+        }
+
+        if (!WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(dialog.SelectedPath, out var normalizedPath))
+        {
+            throw new InvalidOperationException("当前选择的文件夹路径无效。");
+        }
+
+        return normalizedPath;
+    }
+
+    private static string ResolveFavoriteWallpaperSaveDirectoryForSave(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return AppSettings.GetDefaultWallpaperFavoriteSaveDirectory();
+        }
+
+        if (!WallpaperSourceSetting.TryNormalizeLocalDirectoryPath(value, out var normalizedPath))
+        {
+            throw new InvalidOperationException("收藏壁纸保存路径必须是有效的本地绝对路径。");
+        }
+
+        return normalizedPath;
+    }
+
     private async Task ChangeWallpaperAsync(bool isStartup, bool isScheduled = false)
     {
         if (_isWallpaperChangeInProgress)
@@ -767,6 +835,28 @@ public partial class MainWindow : System.Windows.Window
         }
     }
 
+    private void SelectFavoriteWallpaperSaveDirectory_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var selectedPath = SelectDirectory(
+                "选择收藏壁纸的保存目录",
+                _viewModel.WallpaperFavoriteSaveDirectoryInput,
+                showNewFolderButton: true);
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            _viewModel.SetWallpaperFavoriteSaveDirectoryInput(selectedPath);
+            _viewModel.SetStatus("已更新收藏壁纸保存路径，点击“保存设置”后生效。");
+        }
+        catch (Exception ex)
+        {
+            _viewModel.SetStatus($"选择收藏保存路径失败：{ex.Message}");
+        }
+    }
+
     private void ReloadWallpaperSettings_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         var latest = _settingsStore.Load();
@@ -831,11 +921,15 @@ public partial class MainWindow : System.Windows.Window
             _appSettings.DefaultModeId = string.IsNullOrWhiteSpace(_viewModel.DefaultModeId)
                 ? AppSettings.DefaultModeIdValue
                 : _viewModel.DefaultModeId;
+            _appSettings.FavoriteWallpaperSaveDirectory = ResolveFavoriteWallpaperSaveDirectoryForSave(_viewModel.WallpaperFavoriteSaveDirectoryInput);
 
             _startupRegistrationService.SetEnabled(_appSettings.LaunchAtStartup);
+            Directory.CreateDirectory(_appSettings.FavoriteWallpaperSaveDirectory);
+            _wallpaperRotationService.UpdateFavoriteWallpaperDirectory(_appSettings.FavoriteWallpaperSaveDirectory);
             _settingsStore.Save(_appSettings);
             _viewModel.SetDesktopToggleHotkeyInput(normalizedDesktopToggleHotkey);
             _viewModel.SetShowMainWindowHotkeyInput(normalizedShowMainWindowHotkey);
+            _viewModel.SetWallpaperFavoriteSaveDirectoryInput(_appSettings.FavoriteWallpaperSaveDirectory);
             _viewModel.SetHotkeys(normalizedDesktopToggleHotkey, normalizedShowMainWindowHotkey);
             _viewModel.SetDefaultModeName(_viewDataBuilder.FindModeName(_modeService.GetModes(), _appSettings.DefaultModeId));
             LoadModesIntoView();
@@ -1098,6 +1192,7 @@ public partial class MainWindow : System.Windows.Window
         _appSettings.WallpaperChangeOnStartup = latest.WallpaperChangeOnStartup;
         _appSettings.WallpaperAutoRotateEnabled = latest.WallpaperAutoRotateEnabled;
         _appSettings.WallpaperRotationIntervalMinutes = latest.WallpaperRotationIntervalMinutes;
+        _appSettings.FavoriteWallpaperSaveDirectory = latest.FavoriteWallpaperSaveDirectory;
         _appSettings.WallpaperSources = latest.WallpaperSources
             .Select(source => new WallpaperSourceSetting
             {
@@ -1156,6 +1251,7 @@ public partial class MainWindow : System.Windows.Window
             }
         }
 
+        _wallpaperRotationService.UpdateFavoriteWallpaperDirectory(_appSettings.FavoriteWallpaperSaveDirectory);
         LoadSettingsIntoView();
         PrimeWallpaperCache();
         ApplyWallpaperAutoRotationSchedule();
@@ -1289,12 +1385,128 @@ public partial class MainWindow : System.Windows.Window
 
     private async void OnShowMainWindowHotkeyPressed(object? sender, EventArgs e)
     {
-        await Dispatcher.InvokeAsync(ShowFromTray);
+        await Dispatcher.InvokeAsync(() =>
+        {
+            if (ShouldHideMainWindowFromHotkey())
+            {
+                HideToTray("已通过快捷键隐藏主窗口。");
+                return;
+            }
+
+            RestoreAndActivateWindow();
+            RefreshDesktopIconState();
+            RefreshTaskbarState();
+            _viewModel.SetStatus("已通过快捷键恢复主窗口。");
+        });
+    }
+
+    private void RestoreAndActivateWindow()
+    {
+        ShowInTaskbar = true;
+
+        var restoreState = _lastRestorableWindowState == System.Windows.WindowState.Minimized
+            ? System.Windows.WindowState.Normal
+            : _lastRestorableWindowState;
+
+        if (!IsVisible)
+        {
+            Show();
+        }
+
+        WindowState = restoreState;
+
+        ShowActivated = true;
+        Activate();
+        Focus();
+
+        var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (windowHandle != IntPtr.Zero)
+        {
+            NativeMethods.ShowWindow(windowHandle, NativeMethods.SwShow);
+            NativeMethods.ShowWindow(windowHandle, NativeMethods.SwRestore);
+            NativeMethods.BringWindowToTop(windowHandle);
+            NativeMethods.SetWindowPos(
+                windowHandle,
+                NativeMethods.HwndTopmost,
+                0,
+                0,
+                0,
+                0,
+                NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpShowWindow);
+            NativeMethods.SetWindowPos(
+                windowHandle,
+                NativeMethods.HwndNotTopmost,
+                0,
+                0,
+                0,
+                0,
+                NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpShowWindow);
+            NativeMethods.SetForegroundWindow(windowHandle);
+        }
+
+        // WPF 在托盘恢复场景下有时不会稳定抢到前台，短暂切换 Topmost 可以补齐激活。
+        Topmost = true;
+        Topmost = false;
+        Activate();
+
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            Activate();
+            Focus();
+        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    private bool ShouldHideMainWindowFromHotkey()
+    {
+        if (!IsVisible || WindowState == System.Windows.WindowState.Minimized)
+        {
+            return false;
+        }
+
+        var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (windowHandle == IntPtr.Zero)
+        {
+            return IsActive;
+        }
+
+        return NativeMethods.GetForegroundWindow() == windowHandle;
+    }
+
+    private void PrepareWindowForTrayHide()
+    {
+        if (WindowState != System.Windows.WindowState.Minimized)
+        {
+            _lastRestorableWindowState = WindowState;
+            return;
+        }
+
+        _isTrayVisibilityTransition = true;
+        try
+        {
+            WindowState = _lastRestorableWindowState == System.Windows.WindowState.Maximized
+                ? System.Windows.WindowState.Maximized
+                : System.Windows.WindowState.Normal;
+        }
+        finally
+        {
+            _isTrayVisibilityTransition = false;
+        }
     }
 
     private void OnStateChanged(object? sender, EventArgs e)
     {
-        if (WindowState != System.Windows.WindowState.Minimized || !_appSettings.MinimizeToTrayOnMinimize)
+        if (_isTrayVisibilityTransition)
+        {
+            return;
+        }
+
+        if (WindowState != System.Windows.WindowState.Minimized)
+        {
+            _lastRestorableWindowState = WindowState;
+            return;
+        }
+
+        if (!_appSettings.MinimizeToTrayOnMinimize)
         {
             return;
         }
@@ -1330,6 +1542,43 @@ public partial class MainWindow : System.Windows.Window
 
         _viewDataBuilder.ApplySettings(_viewModel, _appSettings, defaultModeName);
         _viewModel.ClearWallpaperSourceDraft();
+    }
+
+    private static class NativeMethods
+    {
+        public const int SwShow = 5;
+        public const int SwRestore = 9;
+        public const uint SwpNoSize = 0x0001;
+        public const uint SwpNoMove = 0x0002;
+        public const uint SwpShowWindow = 0x0040;
+        public static readonly IntPtr HwndTopmost = new(-1);
+        public static readonly IntPtr HwndNotTopmost = new(-2);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool BringWindowToTop(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetWindowPos(
+            IntPtr hWnd,
+            IntPtr hWndInsertAfter,
+            int x,
+            int y,
+            int cx,
+            int cy,
+            uint uFlags);
     }
 
     private void LoadLayoutsIntoView()

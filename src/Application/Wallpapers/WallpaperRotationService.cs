@@ -13,6 +13,7 @@ public sealed class WallpaperRotationService
     private readonly WallpaperImageStore _wallpaperImageStore;
     private readonly DesktopWallpaperService _desktopWallpaperService;
     private readonly object _prefetchSync = new();
+    private PreparedWallpaper? _lastAppliedWallpaper;
     private PreparedWallpaper? _prefetchedWallpaper;
     private Task<PreparedWallpaper>? _prefetchTask;
     private string _prefetchSourceKey = string.Empty;
@@ -86,6 +87,7 @@ public sealed class WallpaperRotationService
         }
 
         _desktopWallpaperService.SetWallpaper(preparedWallpaper.SavedPath);
+        _lastAppliedWallpaper = preparedWallpaper;
         WarmUp(candidates);
 
         return new WallpaperChangeResult
@@ -94,6 +96,34 @@ public sealed class WallpaperRotationService
             SourceName = preparedWallpaper.SourceName,
             SavedPath = preparedWallpaper.SavedPath
         };
+    }
+
+    public WallpaperFavoriteSaveResult SaveCurrentWallpaperToFavorites()
+    {
+        var currentWallpaperPath = _desktopWallpaperService.GetWallpaperPath();
+        if (string.IsNullOrWhiteSpace(currentWallpaperPath))
+        {
+            throw new InvalidOperationException("当前系统壁纸路径不可用。");
+        }
+
+        if (!File.Exists(currentWallpaperPath))
+        {
+            throw new FileNotFoundException("当前系统壁纸文件不存在。", currentWallpaperPath);
+        }
+
+        var preferredName = ResolveFavoriteName(currentWallpaperPath);
+        var saveResult = _wallpaperImageStore.SaveFavoriteCopy(currentWallpaperPath, preferredName);
+        return new WallpaperFavoriteSaveResult
+        {
+            SavedPath = saveResult.SavedPath,
+            DirectoryPath = _wallpaperImageStore.FavoriteWallpaperDirectory,
+            AlreadyExists = saveResult.AlreadyExists
+        };
+    }
+
+    public void UpdateFavoriteWallpaperDirectory(string? directoryPath)
+    {
+        _wallpaperImageStore.SetFavoriteWallpaperDirectory(directoryPath);
     }
 
     private async Task<PreparedWallpaper> DownloadPreparedWallpaperAsync(
@@ -435,6 +465,17 @@ public sealed class WallpaperRotationService
         return string.IsNullOrWhiteSpace(extension)
             ? ".jpg"
             : extension;
+    }
+
+    private string? ResolveFavoriteName(string currentWallpaperPath)
+    {
+        if (_lastAppliedWallpaper is not null
+            && string.Equals(_lastAppliedWallpaper.SavedPath, currentWallpaperPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return _lastAppliedWallpaper.SourceName;
+        }
+
+        return Path.GetFileNameWithoutExtension(currentWallpaperPath);
     }
 
     private sealed record DownloadedImage(byte[] Content, string Extension);
